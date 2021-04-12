@@ -1,0 +1,12 @@
+**/__pycache__
+*.redmibook
+*.GPU
+.vscode
+*.pth
+input
+results
+.idea
+predict
+feature_map_show
+logs
+logs_map
