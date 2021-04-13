@@ -27,7 +27,6 @@ class FasterRCNNTrainer(nn.Module):
         
         targets = []
         for i in range(0, len(labels)):
-            #TODO  将输入数据行列互换
             tmp = [0, bboxes[i][0].tolist(), 1, bboxes[i][1].tolist()]
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             targets.append({"boxes": torch.Tensor(tmp).view(1,4).to(device), "labels": labels[i].long()})
@@ -39,7 +38,7 @@ class FasterRCNNTrainer(nn.Module):
         roi_loc_loss = _losses['loss_box_reg']
         roi_cls_loss = _losses['loss_classifier']
         losses = [rpn_loc_loss, rpn_cls_loss, roi_loc_loss, roi_cls_loss]
-        losses = losses + [104.03*rpn_loc_loss + 10*rpn_cls_loss + 0.94*roi_loc_loss + 4*roi_cls_loss]
+        losses = losses + [rpn_loc_loss + rpn_cls_loss + roi_loc_loss + roi_cls_loss]
         return LossTuple(*losses)
 
     def train_step(self, imgs, bboxes, labels, scale):
