@@ -39,7 +39,7 @@ else:
 
 
 '''设置'''
-path_checkpoint = "logs/14-torch-192S1ALL/Epoch50-Total_Loss5.1596-Val_Loss4.2014.pth"  # 断点路径
+path_checkpoint = "logs/14-torch-fe1x192-192S1ALL/Epoch110-Total_Loss6.7767-Val_Loss5.6218.pth"  # 断点路径
 nms_iou = 0.01
 score_thresh = 0.0
 PLOT = False    #结果可视化
@@ -116,8 +116,8 @@ for (data, bbox, label) in tqdm(test_data_loader):
         label = predictions[1][0]["labels"]
         idx = 0
 
-        max_iou = bbox_iou(np.asarray(bbox[idx].view(1,2)), np.asarray(bboxV.tolist()))[0][0]
-        dete_acc = detection_acc(np.asarray(bbox[idx].view(1,2)), np.asarray(bboxV.tolist()))[0][0]
+        max_iou = bbox_iou(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV.tolist()))[0][0]
+        dete_acc = detection_acc(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV.tolist()))[0][0]
         
         if PLOT:
             X=np.linspace(0,192,192,endpoint=True)

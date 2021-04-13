@@ -2,7 +2,7 @@ from lib.transform import NothingTransform
 from torchvision.models.detection.transform import GeneralizedRCNNTransform
 from lib.generalized_rcnn import GeneralizedRCNN
 from lib.pool import MultiScaleRoIAlign
-from torchvision.models.detection.anchor_utils import AnchorGenerator
+from lib.rpn import AnchorGenerator
 from lib.rpn import RPNHead, RegionProposalNetwork
 from lib.roi_head import RoIHeads
 from torch import nn, Tensor

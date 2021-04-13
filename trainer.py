@@ -29,7 +29,8 @@ class FasterRCNNTrainer(nn.Module):
         for i in range(0, len(labels)):
             #TODO  将输入数据行列互换
             tmp = [ bboxes[i][0].tolist(), 0, bboxes[i][1].tolist(), 1]
-            targets.append({"boxes": torch.Tensor(tmp).view(1,4), "labels": labels[i].long()})
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            targets.append({"boxes": torch.Tensor(tmp).view(1,4).to(device), "labels": labels[i].long()})
 
         _losses = self.faster_rcnn(imgs.unsqueeze(2), targets)
 

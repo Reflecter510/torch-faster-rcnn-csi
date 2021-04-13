@@ -1,3 +1,4 @@
+from utils.lib_utils import smooth_l1_loss
 import torch
 import torchvision
 
@@ -43,7 +44,7 @@ def fastrcnn_loss(class_logits, box_regression, labels, regression_targets):
     N, num_classes = class_logits.shape
     box_regression = box_regression.reshape(N, box_regression.size(-1) // 4, 4)
 
-    box_loss = det_utils.smooth_l1_loss(
+    box_loss = smooth_l1_loss(
         box_regression[sampled_pos_inds_subset, labels_pos],
         regression_targets[sampled_pos_inds_subset],
         beta=1 / 9,
