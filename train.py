@@ -238,11 +238,11 @@ if __name__ == "__main__":
         epoch_size = num_train
         epoch_size_val = num_val
 
-        # train_util = FasterRCNNTrainer(model,optimizer)
+        train_util = FasterRCNNTrainer(model,optimizer)
 
-        # for epoch in range(Freeze_Epoch,Unfreeze_Epoch):
-        #     fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,gen_val,Unfreeze_Epoch,Cuda, best_train_loss, best_test_loss)
-        #     lr_scheduler.step()
+        for epoch in range(Freeze_Epoch,Unfreeze_Epoch):
+            fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,gen_val,Unfreeze_Epoch,Cuda, best_train_loss, best_test_loss)
+            lr_scheduler.step()
 
     writer.close()
 
