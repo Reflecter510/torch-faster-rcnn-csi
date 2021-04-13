@@ -183,7 +183,7 @@ if __name__ == "__main__":
                                     aspect_ratios=((1.0),))
 
     roi_pooler = MultiScaleRoIAlign(featmap_names=['0'],
-                                                    output_size=(16,1),
+                                                    output_size=(1,16),
                                                     sampling_ratio=0)
     model = FasterRCNN(backbone,
                     num_classes=13,
@@ -238,11 +238,11 @@ if __name__ == "__main__":
         epoch_size = num_train
         epoch_size_val = num_val
 
-        train_util = FasterRCNNTrainer(model,optimizer)
+        # train_util = FasterRCNNTrainer(model,optimizer)
 
-        for epoch in range(Freeze_Epoch,Unfreeze_Epoch):
-            fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,gen_val,Unfreeze_Epoch,Cuda, best_train_loss, best_test_loss)
-            lr_scheduler.step()
+        # for epoch in range(Freeze_Epoch,Unfreeze_Epoch):
+        #     fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,gen_val,Unfreeze_Epoch,Cuda, best_train_loss, best_test_loss)
+        #     lr_scheduler.step()
 
     writer.close()
 
@@ -338,12 +338,12 @@ if __name__ == "__main__":
                     bboxV = Variable(bbox)
                     labelV = Variable(label)
 
-                predictions = model(dataV.unsqueeze(3))
+                predictions = model(dataV.unsqueeze(2))
                 if (predictions[1][0]['boxes'].shape[0]) == 0:
                     continue
                 if len(predictions[1])>1:
                     print(len(predictions[1]))
-                bbox = predictions[1][0]["boxes"][:,1:4:2].view(-1,2)
+                bbox = predictions[1][0]["boxes"][:,0:3:2].view(-1,2)
                 conf = predictions[1][0]["scores"]
                 label = predictions[1][0]["labels"]
                 idx = 0
