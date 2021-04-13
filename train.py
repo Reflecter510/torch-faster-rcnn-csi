@@ -348,8 +348,8 @@ if __name__ == "__main__":
                 conf = predictions[1][0]["scores"]
                 label = predictions[1][0]["labels"]
                 idx = 0
-                max_iou = bbox_iou(np.asarray(bbox[idx].view(1,2)), np.asarray(bboxV.tolist()))[0][0]
-                dete_acc = detection_acc(np.asarray(bbox[idx].view(1,2)), np.asarray(bboxV.tolist()))[0][0]
+                max_iou = bbox_iou(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV.tolist()))[0][0]
+                dete_acc = detection_acc(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV.tolist()))[0][0]
 
                 i+=1
                 if MAP:
