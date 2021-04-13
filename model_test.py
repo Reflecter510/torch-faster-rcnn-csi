@@ -42,7 +42,7 @@ else:
 path_checkpoint = "logs/14-torch-fe1x192-192S1ALL/Epoch110-Total_Loss6.7767-Val_Loss5.6218.pth"  # 断点路径
 nms_iou = 0.01
 score_thresh = 0.0
-PLOT = False    #结果可视化
+PLOT = True    #结果可视化
 SHOW = False
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -66,7 +66,7 @@ anchor_generator = AnchorGenerator(sizes=((4*16,5*16,6*16,7*16,8*16,9*16,10*16),
                                     aspect_ratios=((1.0),))
 
 roi_pooler = MultiScaleRoIAlign(featmap_names=['0'],
-                                                    output_size=(1,16),
+                                                    output_size=(16,1),
                                                     sampling_ratio=0)
 model = FasterRCNN(backbone,
                     num_classes=13,
@@ -106,12 +106,12 @@ for (data, bbox, label) in tqdm(test_data_loader):
                 my_map.update({mkey:0})
             my_map[mkey] += 1
 
-        predictions = model(dataV.unsqueeze(2))
+        predictions = model(dataV.unsqueeze(3))
         if (predictions[1][0]['boxes'].shape[0]) == 0:
             continue
         if len(predictions[1])>1:
             print(len(predictions[1]))
-        bbox = predictions[1][0]["boxes"][:,0:3:2].view(-1,2)
+        bbox = predictions[1][0]["boxes"][:,1:4:2].view(-1,2)
         conf = predictions[1][0]["scores"]
         label = predictions[1][0]["labels"]
         idx = 0

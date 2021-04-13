@@ -184,7 +184,7 @@ if __name__ == "__main__":
                                     aspect_ratios=((1.0),))
 
     roi_pooler = MultiScaleRoIAlign(featmap_names=['0'],
-                                                    output_size=(1,16),
+                                                    output_size=(16,1),
                                                     sampling_ratio=0)
     model = FasterRCNN(backbone,
                     num_classes=13,
@@ -339,12 +339,12 @@ if __name__ == "__main__":
                     bboxV = Variable(bbox)
                     labelV = Variable(label)
 
-                predictions = model(dataV.unsqueeze(2))
+                predictions = model(dataV.unsqueeze(3))
                 if (predictions[1][0]['boxes'].shape[0]) == 0:
                     continue
                 if len(predictions[1])>1:
                     print(len(predictions[1]))
-                bbox = predictions[1][0]["boxes"][:,0:3:2].view(-1,2)
+                bbox = predictions[1][0]["boxes"][:,1:4:2].view(-1,2)
                 conf = predictions[1][0]["scores"]
                 label = predictions[1][0]["labels"]
                 idx = 0

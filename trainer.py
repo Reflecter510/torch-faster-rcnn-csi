@@ -28,11 +28,11 @@ class FasterRCNNTrainer(nn.Module):
         targets = []
         for i in range(0, len(labels)):
             #TODO  将输入数据行列互换
-            tmp = [ bboxes[i][0].tolist(), 0, bboxes[i][1].tolist(), 1]
+            tmp = [0, bboxes[i][0].tolist(), 1, bboxes[i][1].tolist()]
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             targets.append({"boxes": torch.Tensor(tmp).view(1,4).to(device), "labels": labels[i].long()})
 
-        _losses = self.faster_rcnn(imgs.unsqueeze(2), targets)
+        _losses = self.faster_rcnn(imgs.unsqueeze(3), targets)
 
         rpn_loc_loss = _losses['loss_rpn_box_reg']
         rpn_cls_loss = _losses['loss_objectness']

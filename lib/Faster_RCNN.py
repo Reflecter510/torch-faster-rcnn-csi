@@ -76,7 +76,7 @@ class FasterRCNN(GeneralizedRCNN):
                 sampling_ratio=0)
 
         if box_head is None:
-            resolution = box_roi_pool.output_size[1]
+            resolution = box_roi_pool.output_size[0]
             representation_size = 1024
             box_head = TwoMLPHead(
                 out_channels * resolution,# ** 2,
