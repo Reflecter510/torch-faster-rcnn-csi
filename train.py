@@ -37,9 +37,8 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
     roi_loc_loss = 0
     roi_cls_loss = 0
     val_toal_loss = 0
-    
-    #FIXME batch size 128
-    epoch_size /= 128
+
+    epoch_size /= train_batch
 
     with tqdm(total=epoch_size,desc=f'Epoch {epoch + 1}/{Epoch}',postfix=dict,mininterval=0.3) as pbar:
         for iteration, batch in enumerate(gen):
@@ -87,8 +86,7 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
 
     print('Start Validation')
 
-    #FIXME batch size 128
-    epoch_size_val /= 128
+    epoch_size_val /= test_bacth
     
     rpn_loc_loss = 0
     rpn_cls_loss = 0
@@ -157,6 +155,9 @@ if __name__ == "__main__":
     RESUME = False
     path_checkpoint = "logs/13-ori-rpnNms1-clsDrop03-192S1ALL/Epoch109-Total_Loss0.6752-Val_Loss19.3184.pth"
 
+    train_batch = 432
+    test_bacth = 215
+
     # 设置随机数种子
     setup_seed(510)
     # 设置loss绘制日志保存路径
@@ -203,8 +204,8 @@ if __name__ == "__main__":
     cudnn.benchmark = True
     
     # 加载数据集
-    num_train, gen = DataUtil.get_data_loader(dataset_name,"train",128,True)
-    num_val, gen_val = DataUtil.get_data_loader(dataset_name,"test",128,False)
+    num_train, gen = DataUtil.get_data_loader(dataset_name,"train",train_batch,True)
+    num_val, gen_val = DataUtil.get_data_loader(dataset_name,"test",test_bacth,False)
 
     # 初始化最佳loss为一个极大值
     best_train_loss = 1000
