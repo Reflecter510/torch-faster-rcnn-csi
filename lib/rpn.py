@@ -1,6 +1,38 @@
 from utils.lib_utils import smooth_l1_loss
 from torchvision.models.detection.rpn import *
+from torch.jit.annotations import List, Optional, Dict, Tuple
+from utils.lib_utils import BoxCoder
 
+def concat_box_prediction_layers(box_cls, box_regression):
+    # type: (List[Tensor], List[Tensor])
+    box_cls_flattened = []
+    box_regression_flattened = []
+    # for each feature level, permute the outputs to make them be in the
+    # same format as the labels. Note that the labels are computed for
+    # all feature levels concatenated, so we keep the same representation
+    # for the objectness and the box_regression
+    for box_cls_per_level, box_regression_per_level in zip(
+        box_cls, box_regression
+    ):
+        N, AxC, H, W = box_cls_per_level.shape
+        Ax2 = box_regression_per_level.shape[1]
+        A = Ax2 // 2
+        C = AxC // A
+        box_cls_per_level = permute_and_flatten(
+            box_cls_per_level, N, A, C, H, W
+        )
+        box_cls_flattened.append(box_cls_per_level)
+
+        box_regression_per_level = permute_and_flatten(
+            box_regression_per_level, N, A, 2, H, W
+        )
+        box_regression_flattened.append(box_regression_per_level)
+    # concatenate on the first dimension (representing the feature levels), to
+    # take into account the way the labels were generated (with all feature maps
+    # being concatenated as well)
+    box_cls = torch.cat(box_cls_flattened, dim=1).flatten(0, -2)
+    box_regression = torch.cat(box_regression_flattened, dim=1).reshape(-1, 2)
+    return box_cls, box_regression
 
 class RPNHead(nn.Module):
     """
@@ -18,7 +50,7 @@ class RPNHead(nn.Module):
         )
         self.cls_logits = nn.Conv2d(in_channels, num_anchors, kernel_size=1, stride=1)
         self.bbox_pred = nn.Conv2d(
-            in_channels, num_anchors * 4, kernel_size=1, stride=1
+            in_channels, num_anchors * 2, kernel_size=1, stride=1
         )
 
         for layer in self.children():
@@ -80,7 +112,7 @@ class RegionProposalNetwork(torch.nn.Module):
         super(RegionProposalNetwork, self).__init__()
         self.anchor_generator = anchor_generator
         self.head = head
-        self.box_coder = det_utils.BoxCoder(weights=(1.0, 1.0, 1.0, 1.0))
+        self.box_coder = BoxCoder(weights=(1.0, 1.0))
 
         # used during training
         self.box_similarity = box_ops.box_iou
@@ -278,6 +310,8 @@ class RegionProposalNetwork(torch.nn.Module):
         features = list(features.values())
         objectness, pred_bbox_deltas = self.head(features)
         anchors = self.anchor_generator(images, features)
+        #TODO 待优化
+        my_anchors = [each[:,1:4:2] for each in anchors]
 
         num_images = len(anchors)
         num_anchors_per_level_shape_tensors = [o[0].shape for o in objectness]
@@ -287,15 +321,24 @@ class RegionProposalNetwork(torch.nn.Module):
         # apply pred_bbox_deltas to anchors to obtain the decoded proposals
         # note that we detach the deltas because Faster R-CNN do not backprop through
         # the proposals
-        proposals = self.box_coder.decode(pred_bbox_deltas.detach(), anchors)
-        proposals = proposals.view(num_images, -1, 4)
+        proposals = self.box_coder.decode(pred_bbox_deltas.detach(), my_anchors)
+        proposals = proposals.view(num_images, -1, 2)
+
+        #  [-1,2] 转 [-1,4]
+        a = torch.zeros((proposals.shape[0],proposals.shape[1],1)).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+        b = torch.ones((proposals.shape[0],proposals.shape[1],1)).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+        proposals = torch.cat([a, proposals[:,:,0].unsqueeze(2), b, proposals[:,:,1].unsqueeze(2)], dim=2)
+
         boxes, scores = self.filter_proposals(proposals, objectness, images.image_sizes, num_anchors_per_level)
 
         losses = {}
         if self.training:
             assert targets is not None
             labels, matched_gt_boxes = self.assign_targets_to_anchors(anchors, targets)
-            regression_targets = self.box_coder.encode(matched_gt_boxes, anchors)
+            #TODO 待优化
+            matched_gt_boxes = [each[:,1:4:2] for each in matched_gt_boxes]
+            
+            regression_targets = self.box_coder.encode(matched_gt_boxes, my_anchors)
             loss_objectness, loss_rpn_box_reg = self.compute_loss(
                 objectness, pred_bbox_deltas, labels, regression_targets)
             losses = {

@@ -96,6 +96,8 @@ class RoIHeads(nn.Module):
 
         if bbox_reg_weights is None:
             bbox_reg_weights = (10., 10., 5., 5.)
+
+        #FIXME 与RPN不一致
         self.box_coder = det_utils.BoxCoder(bbox_reg_weights)
 
         self.box_roi_pool = box_roi_pool
@@ -323,6 +325,7 @@ class RoIHeads(nn.Module):
         #TODO: 建议框高度反缩放
         box_features = self.box_roi_pool(features, proposals, image_shapes)
         box_features = self.box_head(box_features)
+        #TODO  
         class_logits, box_regression = self.box_predictor(box_features)
 
         result: List[Dict[str, torch.Tensor]] = []
