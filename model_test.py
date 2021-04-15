@@ -39,7 +39,7 @@ else:
 
 
 '''设置'''
-path_checkpoint = "logs/14-torch-batch108-noLossWeight-tmp2-192S1ALL/Epoch10-Total_Loss1.2831-Val_Loss0.7381.pth"  # 断点路径
+path_checkpoint = "logs/14-torch-batch108-noLossWeight-RPNx2-ROIx2-192S1ALL/Epoch45-Total_Loss0.3208-Val_Loss0.4231.pth"  # 断点路径
 nms_iou = 0.01
 score_thresh = 0.0
 PLOT = True    #结果可视化

@@ -325,8 +325,13 @@ class RoIHeads(nn.Module):
         #TODO: 建议框高度反缩放
         box_features = self.box_roi_pool(features, proposals, image_shapes)
         box_features = self.box_head(box_features)
-        #TODO  
         class_logits, box_regression = self.box_predictor(box_features)
+        
+        #FIXME  取消[-1,2] 转 [-1,4]  
+        box_regression = box_regression.view(-1, int(box_regression.shape[1]/2), 2)
+        a = torch.zeros((box_regression.shape[0],box_regression.shape[1],1)).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
+        tmp = torch.cat([a, box_regression[:,:,0].unsqueeze(2), a, box_regression[:,:,1].unsqueeze(2)], dim=2)
+        box_regression = tmp.view(box_regression.shape[0], -1)
 
         result: List[Dict[str, torch.Tensor]] = []
         losses = {}

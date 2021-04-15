@@ -77,13 +77,13 @@ class FasterRCNN(GeneralizedRCNN):
 
         if box_head is None:
             resolution = box_roi_pool.output_size[0]
-            representation_size = 1024
+            representation_size = 512
             box_head = TwoMLPHead(
                 out_channels * resolution,# ** 2,
                 representation_size)
 
         if box_predictor is None:
-            representation_size = 1024
+            representation_size = 512
             box_predictor = FastRCNNPredictor(
                 representation_size,
                 num_classes)
@@ -142,11 +142,9 @@ class FastRCNNPredictor(nn.Module):
     def __init__(self, in_channels, num_classes):
         super(FastRCNNPredictor, self).__init__()
         self.cls_score = nn.Linear(in_channels, num_classes)
-        #TODO *2
-        self.bbox_pred = nn.Linear(in_channels, num_classes * 4)
+        self.bbox_pred = nn.Linear(in_channels, num_classes * 2)
 
     def forward(self, x):
-        #TODO ??
         if x.dim() == 4:
             assert list(x.shape[2:]) == [1, 1]
         x = x.flatten(start_dim=1)
