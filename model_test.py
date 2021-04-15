@@ -15,6 +15,8 @@ from nets.alexnet import AlexNet
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+
+import time
        
 os.system("rm input/detection-results/result*.txt")
 os.system("rm input/ground-truth/result*.txt")
@@ -39,7 +41,7 @@ else:
 
 
 '''设置'''
-path_checkpoint = "logs/14-torch-batch108-noLossWeight-RPNx2-ROIx2-192S1ALL/Epoch45-Total_Loss0.3208-Val_Loss0.4231.pth"  # 断点路径
+path_checkpoint = "logs/14-torch-batch108-noLossWeight-RPNx2-ROIx2-MLP512-192S1ALL/Epoch155-Total_Loss0.1702-Val_Loss0.3879.pth"  # 断点路径
 nms_iou = 0.01
 score_thresh = 0.0
 PLOT = True    #结果可视化
@@ -84,6 +86,8 @@ acc = 0.0
 cnt = 0
 i = 0
 my_map = {}
+_time = 0.0
+
 for (data, bbox, label) in tqdm(test_data_loader):
     with torch.no_grad():
         data = data.reshape([-1,IMAGE_SHAPE[0], IMAGE_SHAPE[1]])
@@ -105,8 +109,15 @@ for (data, bbox, label) in tqdm(test_data_loader):
             if not my_map.get(mkey, False):
                 my_map.update({mkey:0})
             my_map[mkey] += 1
+        torch.cuda.synchronize()   #增加同步操作
+        start = time.time()
 
         predictions = model(dataV.unsqueeze(3))
+
+        torch.cuda.synchronize() #增加同步操作
+        end = time.time()
+        _time += (end-start)
+
         if (predictions[1][0]['boxes'].shape[0]) == 0:
             continue
         if len(predictions[1])>1:
@@ -185,9 +196,11 @@ for (data, bbox, label) in tqdm(test_data_loader):
 ious_all /= i
 detection_all /= i
 acc /= i
+_time /= i
 print("有效预测：",cnt)
 print("IOU: ",ious_all)
 print("检测精度: ",detection_all)
 print("分类准确度：", acc)
+print("平均每份预测时间：", _time,"秒")
 
 os.system('python get_map.py')
