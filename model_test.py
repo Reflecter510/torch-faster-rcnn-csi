@@ -41,10 +41,10 @@ else:
 
 
 '''设置'''
-path_checkpoint = "logs/14-torch-batch108-noLossWeight-RPNx2-ROIx2-MLP512-192S1ALL/Epoch155-Total_Loss0.1702-Val_Loss0.3879.pth"  # 断点路径
+path_checkpoint = "logs/14-torch-batch108-noLossWeight-RPNx2-ROIx2-MLP4096-expand-ssn-192S1ALL/Epoch130-Total_Loss0.1487-Val_Loss0.3820.pth"  # 断点路径
 nms_iou = 0.01
 score_thresh = 0.0
-PLOT = True    #结果可视化
+PLOT = False    #结果可视化
 SHOW = False
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

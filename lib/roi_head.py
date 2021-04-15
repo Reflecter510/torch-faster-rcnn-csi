@@ -15,6 +15,8 @@ from typing import Optional, List, Dict, Tuple
 
 from torchvision.models.detection.roi_heads import *
 
+from nets.ssn_ops import StructuredTemporalPyramidPooling
+
 def fastrcnn_loss(class_logits, box_regression, labels, regression_targets):
     # type: (Tensor, Tensor, List[Tensor], List[Tensor]) -> Tuple[Tensor, Tensor]
     """
@@ -115,6 +117,8 @@ class RoIHeads(nn.Module):
         self.keypoint_roi_pool = keypoint_roi_pool
         self.keypoint_head = keypoint_head
         self.keypoint_predictor = keypoint_predictor
+
+        self.stpp = StructuredTemporalPyramidPooling(True, configs=((1,3), (1, 2,5), (1,3)))
 
     def has_mask(self):
         if self.mask_roi_pool is None:
@@ -322,9 +326,24 @@ class RoIHeads(nn.Module):
             labels = None
             regression_targets = None
             matched_idxs = None
+            
+        # 扩展上下文
+        # for tmp_roi in proposals:
+        #     expanded = (tmp_roi[:,3]-tmp_roi[:,1])/12
+        #     # clip bounding box
+        #     tmp_roi[:, 1] = tmp_roi[:,1] - expanded
+        #     tmp_roi[:, 3] = tmp_roi[:,3] + expanded
+        #     tmp_roi[:, 1] = torch.clamp(tmp_roi[:, 1], 0, image_shapes[0][0])
+        #     tmp_roi[:, 3] = torch.clamp(tmp_roi[:, 3], 0, image_shapes[0][0])
+
+
         #TODO: 建议框高度反缩放
         box_features = self.box_roi_pool(features, proposals, image_shapes)
-        box_features = self.box_head(box_features)
+        
+        #TODO 时间金字塔池化
+        activity_ft, completeness_ft = self.stpp(box_features, None, [3, 3 + 10, 16])
+
+        box_features = self.box_head(completeness_ft)
         class_logits, box_regression = self.box_predictor(box_features)
         
         #FIXME  取消[-1,2] 转 [-1,4]  
