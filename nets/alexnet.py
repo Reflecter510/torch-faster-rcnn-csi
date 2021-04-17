@@ -10,16 +10,16 @@ class AlexNet(nn.Module):
         self.out_channels = 384
 
         self.features = nn.Sequential(
-            nn.Conv2d(90, 128, kernel_size=(11,1), stride=(4,1), padding=(2,0)),
+            nn.Conv1d(90, 128, kernel_size=11, stride=4, padding=2),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=(3,1), stride=(2,1)),
-            nn.BatchNorm2d(128),
-            nn.Conv2d(128, 192, kernel_size=(5,1), padding=(2,0)), #尺寸不变
+            nn.MaxPool1d(kernel_size=3, stride=2),
+            nn.BatchNorm1d(128),
+            nn.Conv1d(128, 192, kernel_size=5, padding=2), #尺寸不变
             nn.ReLU(inplace=True),
-            nn.BatchNorm2d(192),
-            nn.Conv2d(192, 384, kernel_size=(3,1), padding=(1,0)), #尺寸不变
+            nn.BatchNorm1d(192),
+            nn.Conv1d(192, 384, kernel_size=3, padding=1), #尺寸不变
             nn.ReLU(inplace=True),
-            nn.BatchNorm2d(384),
+            nn.BatchNorm1d(384),
         )
         # 平均池化到7x7大小
         self.avgpool = nn.AdaptiveAvgPool1d(6)
@@ -74,7 +74,7 @@ def get_alex_feat_stride(x):
 
 if __name__ == '__main__':
     # Example
-    data = torch.rand((1,90,192,1))
+    data = torch.rand((1,90,192))
     data = torch.autograd.Variable(data)
     print(get_alex_feat_stride(192))
 
