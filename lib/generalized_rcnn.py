@@ -87,11 +87,8 @@ class GeneralizedRCNN(nn.Module):
                     raise ValueError("All bounding boxes should have positive height and width."
                                      " Found invalid box {} for target at index {}."
                                      .format(degen_bb, target_idx))
-        
-        features = self.backbone(images.tensors.view(images.tensors.shape[:3]))
-        #FIXME 取消不必要的维度变换
-        features = features.unsqueeze(3)
 
+        features = self.backbone(images.tensors)
         if isinstance(features, torch.Tensor):
             features = OrderedDict([('0', features)])
         proposals, proposal_losses = self.rpn(images, features, targets)

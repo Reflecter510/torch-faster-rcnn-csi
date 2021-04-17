@@ -45,11 +45,11 @@ class RPNHead(nn.Module):
 
     def __init__(self, in_channels, num_anchors):
         super(RPNHead, self).__init__()
-        self.conv = nn.Conv1d(
+        self.conv = nn.Conv2d(
             in_channels, in_channels, kernel_size=3, stride=1, padding=1
         )
-        self.cls_logits = nn.Conv1d(in_channels, num_anchors, kernel_size=1, stride=1)
-        self.bbox_pred = nn.Conv1d(
+        self.cls_logits = nn.Conv2d(in_channels, num_anchors, kernel_size=1, stride=1)
+        self.bbox_pred = nn.Conv2d(
             in_channels, num_anchors * 2, kernel_size=1, stride=1
         )
 
@@ -62,10 +62,9 @@ class RPNHead(nn.Module):
         logits = []
         bbox_reg = []
         for feature in x:
-            #FIXME 取消不必要的维度变换
-            t = F.relu(self.conv(feature.view(feature.shape[:3])))
-            logits.append(self.cls_logits(t).unsqueeze(3))
-            bbox_reg.append(self.bbox_pred(t).unsqueeze(3))
+            t = F.relu(self.conv(feature))
+            logits.append(self.cls_logits(t))
+            bbox_reg.append(self.bbox_pred(t))
         return logits, bbox_reg
 
 
