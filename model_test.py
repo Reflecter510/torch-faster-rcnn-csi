@@ -35,13 +35,13 @@ else:
 加载测试集
 '''
 if dataset_name != "S":
-    num_test_instances, test_data_loader = DataUtil.get_data_loader(dataset_name, which_data, batch_size=1, shuffle = False)
+    num_test_instances, test_data_loader = DataUtil.get_data_loader(dataset_name, which_data, batch_size=215, shuffle = False)
 else:
-    num_test_instances, test_data_loader = DataUtil.get_data_S_loader(which_data, batch_size=1, shuffle = False)
+    num_test_instances, test_data_loader = DataUtil.get_data_S_loader(which_data, batch_size=215, shuffle = False)
 
 
 '''设置'''
-path_checkpoint = "logs/14-torch-batch108-noLossWeight-RPNx2-ROIx2-MLP4096-expand-ssn-192S1ALL/Epoch130-Total_Loss0.1487-Val_Loss0.3820.pth"  # 断点路径
+path_checkpoint = "logs/15-torch-cnn3511-bias3511-batch72-oneCnn384-192S1ALL/Epoch35-Total_Loss1.3369-Val_Loss0.7354.pth"  # 断点路径
 nms_iou = 0.01
 score_thresh = 0.0
 PLOT = False    #结果可视化
@@ -102,19 +102,21 @@ for (data, bbox, label) in tqdm(test_data_loader):
         
         # if labelV[0]==3.0 or labelV[0]==4.0:
         #     continue
-        i+=1
+       
 
         if False:
             mkey = int(int((bbox[0][1]-bbox[0][0])/10)*10)
             if not my_map.get(mkey, False):
                 my_map.update({mkey:0})
             my_map[mkey] += 1
-        torch.cuda.synchronize()   #增加同步操作
+        if Cuda:
+            torch.cuda.synchronize()   #增加同步操作
         start = time.time()
 
         predictions = model(dataV.unsqueeze(3))
 
-        torch.cuda.synchronize() #增加同步操作
+        if Cuda:
+            torch.cuda.synchronize() #增加同步操作
         end = time.time()
         _time += (end-start)
 
@@ -122,76 +124,81 @@ for (data, bbox, label) in tqdm(test_data_loader):
             continue
         if len(predictions[1])>1:
             print(len(predictions[1]))
-        bbox = predictions[1][0]["boxes"][:,1:4:2].view(-1,2)
-        conf = predictions[1][0]["scores"]
-        label = predictions[1][0]["labels"]
-        idx = 0
 
-        max_iou = bbox_iou(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV.tolist()))[0][0]
-        dete_acc = detection_acc(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV.tolist()))[0][0]
-        
-        if PLOT:
-            X=np.linspace(0,192,192,endpoint=True)
-            plt.contourf(dataV[0].cpu())
-            plt.colorbar()
+        for idp in range(0, len(predictions[1])):
+            prediction = predictions[1][idp]
+            i+=1
+            if prediction['boxes'].shape[0] == 0:
+                continue
+            bbox = prediction["boxes"][:,1:4:2].view(-1,2)
+            conf = prediction["scores"]
+            label = prediction["labels"]
+            idx = 0
 
-            currentAxis=plt.gca()
-            if dataset_name=="TEMPORAL":
-                h = 49
-            else:
-                h = 87
-            rect=patches.Rectangle((bboxV[0][0], 1), bboxV[0][1]-bboxV[0][0] ,h, linewidth=2,edgecolor='white',facecolor='none')
-            currentAxis.add_patch(rect)
-            rect=patches.Rectangle((bbox[idx][0], 2), bbox[idx][1]-bbox[idx][0] ,h-2, linewidth=2,edgecolor='r',facecolor='none')
-            currentAxis.add_patch(rect)
+            max_iou = bbox_iou(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV[idp].view(1,2)))[0][0]
+            dete_acc = detection_acc(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV[idp].view(1,2)))[0][0]
             
-            plt.xlabel(which_data+str(i)+"  prd = "+actions[int(label[idx])]+"  gt = "+actions[int(labelV[0][0])]+"  acc = "+str(conf[idx])[:5]+"  iou = "+str(max_iou)[:5]+" wd = "+str(int(bboxV[0][1]-bboxV[0][0])))
-            if max_iou >= 0.8 and max_iou<0.9:
-                mkey = int(int((bboxV[0][1]-bboxV[0][0])/10)*10)
-                if not my_map.get(mkey, False):
-                    my_map.update({mkey:0})
-                my_map[mkey] += 1
-                plt.savefig("predict/%d.png"%(i), dpi=520)
-                plt.show()
-            plt.close()
-
-        if SHOW:
-            fe = model.extractor
-            x = dataV.data
-            fe.eval()
-            for name, layer in fe._modules.items():
-                x = layer(x)
-
-                #if f'{name}'!='0' and f'{name}'!='3' and f'{name}'!= '5':
-                 #   continue
-
+            
+            if PLOT:
                 X=np.linspace(0,192,192,endpoint=True)
-                plt.contourf(x[0].permute(1,0).cpu())
+                plt.contourf(dataV[0].cpu())
                 plt.colorbar()
+
                 currentAxis=plt.gca()
-                plt.xlabel(which_data+str(i)+"  prd = "+actions[int(label[idx])]+"  gt = "+actions[int(labelV[0][0])]+"  acc = "+str(conf[idx])[:5]+"  iou = "+str(max_iou)[:5]+" wd = "+str(int(bboxV[0][1]-bboxV[0][0])))
-                plt.savefig("feature_map_show/%d_layer_%s.png"%(i, f'{name}'), dpi=520)
-                plt.show()
+                if dataset_name=="TEMPORAL":
+                    h = 49
+                else:
+                    h = 87
+                rect=patches.Rectangle((bboxV[0][0], 1), bboxV[0][1]-bboxV[0][0] ,h, linewidth=2,edgecolor='white',facecolor='none')
+                currentAxis.add_patch(rect)
+                rect=patches.Rectangle((bbox[idx][0], 2), bbox[idx][1]-bbox[idx][0] ,h-2, linewidth=2,edgecolor='r',facecolor='none')
+                currentAxis.add_patch(rect)
+                
+                plt.xlabel(which_data+str(i)+"  prd = "+actions[int(label[idx])]+"  gt = "+actions[int(labelV[0][0])]+"  acc = "+str(conf[idx].tolist())[:5]+"  iou = "+str(max_iou)[:5]+" wd = "+str(int(bboxV[0][1]-bboxV[0][0])))
+                if max_iou >= 0.8 and max_iou<0.9:
+                    mkey = int(int((bboxV[0][1]-bboxV[0][0])/10)*10)
+                    if not my_map.get(mkey, False):
+                        my_map.update({mkey:0})
+                    my_map[mkey] += 1
+                    plt.savefig("predict/%d.png"%(i), dpi=520)
+                    plt.show()
                 plt.close()
-            #break
+          
+            if SHOW:
+                fe = model.backbone
+                x = dataV.unsqueeze(3)
+                fe.eval()
+                for name, layer in fe._modules.items():
+                    x = layer(x)
 
+                    #if f'{name}'!='0' and f'{name}'!='3' and f'{name}'!= '5':
+                    #   continue
 
-        resultFile = open("input/detection-results/result"+str(i)+".txt", "w")
+                    X=np.linspace(0,192,192,endpoint=True)
+                    plt.contourf(x[0].squeeze().permute(1,0).cpu())
+                    plt.colorbar()
+                    currentAxis=plt.gca()
+                    plt.xlabel(which_data+str(i)+"  prd = "+actions[int(label[idx])]+"  gt = "+actions[int(labelV[0][0])]+"  acc = "+str(conf[idx].tolist())[:5]+"  iou = "+str(max_iou)[:5]+" wd = "+str(int(bboxV[0][1]-bboxV[0][0])))
+                    plt.savefig("feature_map_show/%d_layer_%s.png"%(i, f'{name}'), dpi=520)
+                    plt.show()
+                    plt.close()
+                #break
 
-        j = idx
-        resultFile.write("%s %.6f %f %f %f %f\n"%(actions[int(label[j])], conf[j], bbox[j][0], 0, bbox[j][1], 90))
-        resultFile.close()
-        groundFile = open("input/ground-truth/result"+str(i)+".txt", "w")
-        for j in range(0, bboxV.shape[0]):
-            groundFile.write("%s %f %f %f %f\n"%(actions[int(labelV[j][0])], bboxV[j][0], 0, bboxV[j][1], 90))
-        groundFile.close()
+            resultFile = open("input/detection-results/result"+str(i)+".txt", "w")
+            j = idx
+            resultFile.write("%s %.6f %f %f %f %f\n"%(actions[int(label[j])], conf[j], bbox[j][0], 0, bbox[j][1], 90))
+            resultFile.close()
+            groundFile = open("input/ground-truth/result"+str(i)+".txt", "w")
+            #for j in range(0, bboxV[idp].shape[0]):
+            groundFile.write("%s %f %f %f %f\n"%(actions[int(labelV[idp][0])], bboxV[idp][0], 0, bboxV[idp][1], 90))
+            groundFile.close()
 
-        print("预测:", bbox[idx].tolist()," ", str(conf[idx].tolist())[:5], " ",label[idx], " 真实:",bboxV.tolist(), labelV.tolist(), "iou=", max_iou)
-        if int(label[idx])==int(labelV[0]):
-            acc = acc + 1
-        ious_all += max_iou
-        detection_all += dete_acc
-        cnt+=1
+            print("预测:", bbox[idx].tolist()," ", str(conf[idx].tolist())[:5], " ",label[idx], " 真实:",bboxV[idp].tolist(), labelV[idp].tolist(), "iou=", max_iou)
+            if int(label[idx])==int(labelV[idp][0]):
+                acc = acc + 1
+            ious_all += max_iou
+            detection_all += dete_acc
+            cnt+=1
 
 ious_all /= i
 detection_all /= i
