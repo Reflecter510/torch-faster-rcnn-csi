@@ -12,14 +12,16 @@ class CnnBlock(nn.Module):
         self.layer = nn.Conv2d(in_channels, out_channels, kernel_size=(kernel_size,1), stride=(stride,1), padding=(padding,0))
         self.BN = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=(3,1), stride=(2,1))
+        self.maxpool = nn.MaxPool2d(kernel_size=(2,1), stride=(2,1))
 
     def forward(self, x):
         x = self.layer(x)
-        x = self.BN(x)
+        
         x = self.relu(x)
         if self.pool :
             x = self.maxpool(x)
+
+        x = self.BN(x)
         return x 
 
 class AlexNet(nn.Module):
