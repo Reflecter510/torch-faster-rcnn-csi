@@ -156,7 +156,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "192S1ALL"
     # 实验名
-    log_name = "15-torch-outC128-lr5e4"
+    log_name = "15-torch-outC48-noMaxPool-lr2e4"
     
     # 是否断点训练
     RESUME = False
@@ -184,7 +184,7 @@ if __name__ == "__main__":
 
     # 初始化网络结构
     backbone = AlexNet().features
-    backbone.out_channels = 128
+    backbone.out_channels = 48
     anchor_generator = AnchorGenerator(sizes=((4*16,5*16,6*16,7*16,8*16,9*16,10*16),),
                                     aspect_ratios=((1.0),))
 
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     best_test_loss = 1000
 
     if True:
-        lr = 5e-4
+        lr = 2e-4
         # 起始epoch
         Freeze_Epoch = 0
         # 结束epoch

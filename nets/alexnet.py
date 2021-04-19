@@ -27,12 +27,12 @@ class CnnBlock(nn.Module):
 class AlexNet(nn.Module):
     def __init__(self, num_classes=1000):
         super(AlexNet, self).__init__()
-        self.out_channels = 128
+        self.out_channels = 48
 
         self.features = nn.Sequential(
-            CnnBlock(90, 128, kernel_size=5, stride=1, padding=2, pool=True),
-            CnnBlock(128, 192, kernel_size=5, stride=1, padding=2),
-            CnnBlock(192, 128, kernel_size=3, stride=1, padding=1)
+            CnnBlock(90, 128, kernel_size=5, stride=1, padding=2, pool=False),
+            CnnBlock(128, 64, kernel_size=5, stride=1, padding=2),
+            CnnBlock(64, 48, kernel_size=3, stride=1, padding=1)
         )
         
         # 平均池化到7x7大小
