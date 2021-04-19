@@ -1,9 +1,5 @@
-Kaggle = False
+Kaggle = True
 
-if Kaggle:
-    import sys
-    kaggle_path_prefix = "../usr/lib/get_faster_s_from_github/torch-faster-rcnn-csi/"
-    sys.path.append(kaggle_path_prefix)
 
 
 from torch.autograd import Variable
