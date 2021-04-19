@@ -1,3 +1,11 @@
+Kaggle = False
+
+if Kaggle:
+    import sys
+    kaggle_path_prefix = "../usr/lib/get_faster_s_from_github/torch-faster-rcnn-csi/"
+    sys.path.append(kaggle_path_prefix)
+
+
 from torch.autograd import Variable
 from trainer import FasterRCNNTrainer
 import numpy as np
@@ -146,6 +154,9 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
         torch.save(checkpoint, 'logs/'+log_name+'/Epoch%d-Total_Loss%.4f-Val_Loss%.4f.pth'%((epoch+1),total_loss/(epoch_size+1),val_toal_loss/(epoch_size_val+1)))
     
 if __name__ == "__main__":
+    if Kaggle is True:
+        DataUtil.home_dir = "../input/mydata/S1"
+    
     # 设置训练的数据集
     dataset_name = "192S1ALL"
     # 实验名
