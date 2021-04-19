@@ -156,7 +156,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "192S1ALL"
     # 实验名
-    log_name = "14-torch-batch108-noLossWeight-RPNx2-ROIx2-MLP512-ssn+expandFix"
+    log_name = "15-torch-BNfirst"
     
     # 是否断点训练
     RESUME = False

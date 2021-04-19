@@ -2,7 +2,25 @@
 from torch.functional import Tensor
 import torch.nn as nn
 import torch
+from torch.nn.functional import selu
 import torchvision.models.detection.faster_rcnn
+
+class CnnBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, pool = False):
+        super().__init__()
+        self.pool = pool
+        self.layer = nn.Conv2d(in_channels, out_channels, kernel_size=(kernel_size,1), stride=(stride,1), padding=(padding,0))
+        self.BN = nn.BatchNorm2d(out_channels)
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=(3,1), stride=(2,1))
+
+    def forward(self, x):
+        x = self.layer(x)
+        x = self.BN(x)
+        x = self.relu(x)
+        if self.pool :
+            x = self.maxpool(x)
+        return x 
 
 class AlexNet(nn.Module):
     def __init__(self, num_classes=1000):
@@ -10,17 +28,11 @@ class AlexNet(nn.Module):
         self.out_channels = 384
 
         self.features = nn.Sequential(
-            nn.Conv2d(90, 128, kernel_size=(11,1), stride=(4,1), padding=(2,0)),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=(3,1), stride=(2,1)),
-            nn.BatchNorm2d(128),
-            nn.Conv2d(128, 192, kernel_size=(5,1), padding=(2,0)), #尺寸不变
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(192),
-            nn.Conv2d(192, 384, kernel_size=(3,1), padding=(1,0)), #尺寸不变
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(384),
+            CnnBlock(90, 128, kernel_size=11, stride=4, padding=2, pool=True),
+            CnnBlock(128, 192, kernel_size=5, stride=1, padding=2),
+            CnnBlock(192, 384, kernel_size=3, stride=1, padding=1)
         )
+        
         # 平均池化到7x7大小
         self.avgpool = nn.AdaptiveAvgPool1d(6)
         self.classifier = nn.Sequential(
@@ -32,7 +44,8 @@ class AlexNet(nn.Module):
         )
 
     def forward(self, x):
-        x = self.features(x)
+        for layer in self.features:
+            x = layer(x)
         # x = x.view(x.size(0), 256 * 6 * 6)
         # 平均池化
         x = self.avgpool(x)
