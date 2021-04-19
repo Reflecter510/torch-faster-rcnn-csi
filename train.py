@@ -156,7 +156,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "192S1ALL"
     # 实验名
-    log_name = "15-torch-pool2"
+    log_name = "15-torch-outC128"
     
     # 是否断点训练
     RESUME = False
@@ -181,12 +181,10 @@ if __name__ == "__main__":
         NUM_CLASSES = 12
     IMAGE_SHAPE = utils_base.get_IMAGE_SHAPE_from_dataset_name(dataset_name)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # 步长
-    feat_stride = utils_base.get_feat_stride(IMAGE_SHAPE[1], BACKBONE)
 
     # 初始化网络结构
     backbone = AlexNet().features
-    backbone.out_channels = 384
+    backbone.out_channels = 128
     anchor_generator = AnchorGenerator(sizes=((4*16,5*16,6*16,7*16,8*16,9*16,10*16),),
                                     aspect_ratios=((1.0),))
 
@@ -296,7 +294,6 @@ if __name__ == "__main__":
         NUM_CLASSES = 6
     else:
         NUM_CLASSES = 12
-    feat_stride = utils_base.get_feat_stride(IMAGE_SHAPE[1], BACKBONE)
 
 
     fileList = os.listdir(dirs)

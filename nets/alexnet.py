@@ -12,7 +12,7 @@ class CnnBlock(nn.Module):
         self.layer = nn.Conv2d(in_channels, out_channels, kernel_size=(kernel_size,1), stride=(stride,1), padding=(padding,0))
         self.BN = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=(2,1), stride=(2,1))
+        self.maxpool = nn.MaxPool2d(kernel_size=(3,1), stride=(2,1))
 
     def forward(self, x):
         x = self.layer(x)
@@ -27,12 +27,12 @@ class CnnBlock(nn.Module):
 class AlexNet(nn.Module):
     def __init__(self, num_classes=1000):
         super(AlexNet, self).__init__()
-        self.out_channels = 384
+        self.out_channels = 128
 
         self.features = nn.Sequential(
-            CnnBlock(90, 128, kernel_size=11, stride=4, padding=2, pool=True),
+            CnnBlock(90, 128, kernel_size=5, stride=1, padding=2, pool=True),
             CnnBlock(128, 192, kernel_size=5, stride=1, padding=2),
-            CnnBlock(192, 384, kernel_size=3, stride=1, padding=1)
+            CnnBlock(192, 128, kernel_size=3, stride=1, padding=1)
         )
         
         # 平均池化到7x7大小
@@ -72,26 +72,11 @@ def decom_alexnet():
     # print(classifier)
     return features,classifier
 
-# alexnet 根据数据尺寸获取步长
-def get_alex_feat_stride(x):
-    ori = x*1.0
-    x = ((x+2*2-(11-1)-1)/4+1)
-    
-    # maxpool   ks=3  stride=2
-    x = (x-(3-1)-1)/2+1
-    
-    x = ((x+2*2-(5-1)-1)+1)
-
-    # maxpool   ks=3  stride=2
-    #x = (x-(3-1)-1)/2+1
-    
-    return ori/int(x)
 
 if __name__ == '__main__':
     # Example
     data = torch.rand((1,90,192,1))
     data = torch.autograd.Variable(data)
-    print(get_alex_feat_stride(192))
 
     net = AlexNet()
     print(net)
