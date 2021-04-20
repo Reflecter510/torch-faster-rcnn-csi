@@ -25,15 +25,18 @@ class CnnBlock(nn.Module):
         return x 
 
 class AlexNet(nn.Module):
-    def __init__(self, num_classes=1000):
+    out_channels = 384
+    def __init__(self, n_channels=52, n_classes=7):
         super(AlexNet, self).__init__()
-        self.out_channels = 384
+       
 
         self.features = nn.Sequential(
-            CnnBlock(90, 128, kernel_size=11, stride=4, padding=2, pool=True),
+            CnnBlock(n_channels, 128, kernel_size=11, stride=4, padding=2, pool=True),
             CnnBlock(128, 192, kernel_size=5, stride=1, padding=2),
-            CnnBlock(192, 384, kernel_size=3, stride=1, padding=1)
+            CnnBlock(192, self.out_channels, kernel_size=3, stride=1, padding=1)
         )
+
+        self.features.out_channels = self.out_channels
         
         # 平均池化到7x7大小
         self.avgpool = nn.AdaptiveAvgPool1d(6)
@@ -42,7 +45,7 @@ class AlexNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(4096, 4096),
             nn.ReLU(inplace=True),
-            nn.Linear(4096, num_classes),
+            nn.Linear(4096, n_classes),
         )
 
     def forward(self, x):

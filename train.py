@@ -2,6 +2,7 @@ Kaggle = True
 
 
 
+from nets.unet_model import UNet
 from torch.autograd import Variable
 from trainer import FasterRCNNTrainer
 import numpy as np
@@ -156,7 +157,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "192S1ALL"
     # 实验名
-    log_name = "15-torch"
+    log_name = "15-torch-unet"
     
     # 是否断点训练
     RESUME = False
@@ -172,27 +173,34 @@ if __name__ == "__main__":
     writer = SummaryWriter('logs/'+log_name+'/'+str(datetime.date.today()))
 
     # 设置主干特征提取网络类型
-    BACKBONE = "alexnet"
+    BACKBONE = "unet"
     
     # 初始化数据集参数
     if dataset_name == "TEMPORAL":
         NUM_CLASSES = 6
+        N_CHANNELS = 52
+        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)
     else:
         NUM_CLASSES = 12
+        N_CHANNELS = 90
+        ANCHOR = ((2*16, 4*16,5*16,6*16,7*16,8*16,10*16),)
     IMAGE_SHAPE = utils_base.get_IMAGE_SHAPE_from_dataset_name(dataset_name)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # 初始化网络结构
-    backbone = AlexNet().features
-    backbone.out_channels = 384
-    anchor_generator = AnchorGenerator(sizes=((4*16,5*16,6*16,7*16,8*16,9*16,10*16),),
+    if BACKBONE == "alexnet":
+        backbone = AlexNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
+    elif BACKBONE == "unet":
+        backbone = UNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
+    
+    anchor_generator = AnchorGenerator(sizes=ANCHOR,
                                     aspect_ratios=((1.0),))
 
     roi_pooler = MultiScaleRoIAlign(featmap_names=['0'],
                                                     output_size=(16,1),
                                                     sampling_ratio=0)
     model = FasterRCNN(backbone,
-                    num_classes=13,
+                    num_classes=NUM_CLASSES+1,
                     rpn_anchor_generator=anchor_generator,
                     box_roi_pool=roi_pooler).to(device)
 
