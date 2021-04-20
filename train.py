@@ -157,7 +157,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "192S1ALL"
     # 实验名
-    log_name = "15-torch-unet"
+    log_name = "15-torch-unet-noSsn-lr5e5"
     
     # 是否断点训练
     RESUME = False
@@ -225,7 +225,7 @@ if __name__ == "__main__":
     best_test_loss = 1000
 
     if True:
-        lr = 1e-4
+        lr = 5e-5
         # 起始epoch
         Freeze_Epoch = 0
         # 结束epoch
