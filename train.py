@@ -157,7 +157,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "192S1ALL"
     # 实验名
-    log_name = "15-torch-unet-noSsn-bs72-drop05"
+    log_name = "15-torch-unet-noSsn-bs72-drop05-lr6e4"
     
     # 是否断点训练
     RESUME = False
@@ -225,11 +225,11 @@ if __name__ == "__main__":
     best_test_loss = 1000
 
     if True:
-        lr = 1e-4
+        lr = 6e-4
         # 起始epoch
         Freeze_Epoch = 0
         # 结束epoch
-        Unfreeze_Epoch = 200
+        Unfreeze_Epoch = 220
 
         optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
         
