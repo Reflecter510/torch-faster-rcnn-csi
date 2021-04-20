@@ -157,13 +157,13 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "192S1ALL"
     # 实验名
-    log_name = "15-torch-unet-noSsn-lr5e5"
+    log_name = "15-torch-unet-noSsn-bs72"
     
     # 是否断点训练
     RESUME = False
     path_checkpoint = "logs/13-ori-rpnNms1-clsDrop03-192S1ALL/Epoch109-Total_Loss0.6752-Val_Loss19.3184.pth"
 
-    train_batch = 108
+    train_batch = 72
     test_bacth = 215
 
     # 设置随机数种子
@@ -225,7 +225,7 @@ if __name__ == "__main__":
     best_test_loss = 1000
 
     if True:
-        lr = 5e-5
+        lr = 1e-4
         # 起始epoch
         Freeze_Epoch = 0
         # 结束epoch
