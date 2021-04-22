@@ -1,6 +1,3 @@
-from torch._C import T
-
-
 Kaggle = True
 
 
@@ -158,7 +155,7 @@ if __name__ == "__main__":
         DataUtil.home_dir = "../input/mydata/S1"
     
     # 设置训练的数据集
-    dataset_name = "192S1ALL"
+    dataset_name = "TEMPORAL"
     # 实验名
     log_name = "15-torch"
     
@@ -166,8 +163,8 @@ if __name__ == "__main__":
     RESUME = False
     path_checkpoint = "logs/13-ori-rpnNms1-clsDrop03-192S1ALL/Epoch109-Total_Loss0.6752-Val_Loss19.3184.pth"
 
-    train_batch = 108
-    test_bacth = 215
+    train_batch = 124
+    test_bacth = 278
 
     # 设置随机数种子
     setup_seed(510)
