@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "TEMPORAL"
     # 实验名
-    log_name = "15-torch-2flow"
+    log_name = "15-torch-2flow-my+unet_outC64"
     
     # 初始化数据集参数
     if dataset_name == "TEMPORAL":
@@ -192,7 +192,7 @@ if __name__ == "__main__":
 
     # 初始化网络结构
     if BACKBONE == "alexnet":
-        backbone = Feature(N_CHANNELS)    #双流
+        backbone = Feature(N_CHANNELS, 64)    #双流
         #backbone = AlexNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
     elif BACKBONE == "unet":
         backbone = UNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
