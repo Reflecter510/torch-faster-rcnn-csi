@@ -157,13 +157,13 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "TEMPORAL"
     # 实验名
-    log_name = "15-torch-anchor4-batch93"
+    log_name = "15-torch-anchor4-batch62"
     
     # 是否断点训练
     RESUME = False
     path_checkpoint = "logs/13-ori-rpnNms1-clsDrop03-192S1ALL/Epoch109-Total_Loss0.6752-Val_Loss19.3184.pth"
 
-    train_batch = 93
+    train_batch = 62
     test_bacth = 278
 
     # 设置随机数种子
@@ -230,7 +230,7 @@ if __name__ == "__main__":
         # 起始epoch
         Freeze_Epoch = 0
         # 结束epoch
-        Unfreeze_Epoch = 220
+        Unfreeze_Epoch = 260
 
         optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
         

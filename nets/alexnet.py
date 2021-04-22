@@ -81,10 +81,10 @@ if __name__ == '__main__':
     data = torch.rand((1,90,192,1))
     data = torch.autograd.Variable(data)
 
-    net = AlexNet()
+    net = AlexNet(n_channels=90)
     print(net)
 
-    features,classifier = decom_alexnet()
+    features = net.features
     #print(features)
 
     out = features(data)  #[1, 256, 1, 92]
