@@ -151,20 +151,35 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
         torch.save(checkpoint, 'logs/'+log_name+'/Epoch%d-Total_Loss%.4f-Val_Loss%.4f.pth'%((epoch+1),total_loss/(epoch_size+1),val_toal_loss/(epoch_size_val+1)))
     
 if __name__ == "__main__":
-    if Kaggle is True:
-        DataUtil.home_dir = "../input/my"
-    
     # 设置训练的数据集
     dataset_name = "TEMPORAL"
     # 实验名
     log_name = "15-torch-2flow"
     
+    # 初始化数据集参数
+    if dataset_name == "TEMPORAL":
+        NUM_CLASSES = 6
+        N_CHANNELS = 52
+        train_batch = 62
+        test_bacth = 278
+        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
+        if Kaggle is True:
+            DataUtil.home_dir = "../input/my"
+    else:
+        NUM_CLASSES = 12
+        N_CHANNELS = 90
+        train_batch = 108
+        test_bacth = 215
+        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
+        if Kaggle is True:
+            DataUtil.home_dir = "../input/mydata/S1"
+            
+    # 设置主干特征提取网络类型
+    BACKBONE = "alexnet"
+
     # 是否断点训练
     RESUME = False
     path_checkpoint = "logs/13-ori-rpnNms1-clsDrop03-192S1ALL/Epoch109-Total_Loss0.6752-Val_Loss19.3184.pth"
-
-    train_batch = 62
-    test_bacth = 278
 
     # 设置随机数种子
     setup_seed(510)
@@ -172,25 +187,12 @@ if __name__ == "__main__":
     log_name += "-"+dataset_name
     writer = SummaryWriter('logs/'+log_name+'/'+str(datetime.date.today()))
 
-    # 设置主干特征提取网络类型
-    BACKBONE = "alexnet"
-    
-    # 初始化数据集参数
-    if dataset_name == "TEMPORAL":
-        NUM_CLASSES = 6
-        N_CHANNELS = 52
-        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
-    else:
-        NUM_CLASSES = 12
-        N_CHANNELS = 90
-        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
-        
     IMAGE_SHAPE = utils_base.get_IMAGE_SHAPE_from_dataset_name(dataset_name)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # 初始化网络结构
     if BACKBONE == "alexnet":
-        backbone = Feature(N_CHANNELS)
+        backbone = Feature(N_CHANNELS)    #双流
         #backbone = AlexNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
     elif BACKBONE == "unet":
         backbone = UNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features

@@ -31,16 +31,18 @@ IMAGE_SHAPE = utils_base.get_IMAGE_SHAPE_from_dataset_name(dataset_name)
 
 if dataset_name == "TEMPORAL":
     actions = ['none', "1", "2", "3", "4", "5", "6"]
+    batch_size = 278
 else:
     actions = ['none', 'jump', 'pick', 'throw', 'pull', 'clap', 'box', 'wave', 'lift', 'kick', 'squat', 'turnRound', 'checkWatch']
+    batch_size = 215
 
 '''
 加载测试集
 '''
 if dataset_name != "S":
-    num_test_instances, test_data_loader = DataUtil.get_data_loader(dataset_name, which_data, batch_size=278, shuffle = False)
+    num_test_instances, test_data_loader = DataUtil.get_data_loader(dataset_name, which_data, batch_size=batch_size, shuffle = False)
 else:
-    num_test_instances, test_data_loader = DataUtil.get_data_S_loader(which_data, batch_size=278, shuffle = False)
+    num_test_instances, test_data_loader = DataUtil.get_data_S_loader(which_data, batch_size=batch_size, shuffle = False)
 
 
 '''设置'''
@@ -61,11 +63,11 @@ BACKBONE = "alexnet"
 if dataset_name == "TEMPORAL":
     NUM_CLASSES = 6
     N_CHANNELS = 52
-    ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)#((2*16, 4*16,5*16,6*16,7*16,8*16,10*16),)
+    ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))#((2*16, 4*16,5*16,6*16,7*16,8*16,10*16),)
 else:
     NUM_CLASSES = 12
     N_CHANNELS = 90
-    ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)
+    ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
 
 
 if BACKBONE == "alexnet":
