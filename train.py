@@ -157,7 +157,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "192S1ALL"
     # 实验名
-    log_name = "15-torch-unet-noSsn-bs72"
+    log_name = "15-torch-unet-noSsn-bs72-fixAnchor"
     
     # 是否断点训练
     RESUME = False
@@ -179,11 +179,11 @@ if __name__ == "__main__":
     if dataset_name == "TEMPORAL":
         NUM_CLASSES = 6
         N_CHANNELS = 52
-        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)
+        ANCHOR = ((2*16, 4*16,5*16,6*16,7*16,8*16,10*16),)
     else:
         NUM_CLASSES = 12
         N_CHANNELS = 90
-        ANCHOR = ((2*16, 4*16,5*16,6*16,7*16,8*16,10*16),)
+        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)   
     IMAGE_SHAPE = utils_base.get_IMAGE_SHAPE_from_dataset_name(dataset_name)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
