@@ -152,7 +152,7 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
     
 if __name__ == "__main__":
     if Kaggle is True:
-        DataUtil.home_dir = "../input/mydata/S1"
+        DataUtil.home_dir = "../input/mydata/TEMPORAL"
     
     # 设置训练的数据集
     dataset_name = "TEMPORAL"
