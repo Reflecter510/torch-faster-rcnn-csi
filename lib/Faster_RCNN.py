@@ -118,14 +118,12 @@ class TwoMLPHead(nn.Module):
         super(TwoMLPHead, self).__init__()
 
         self.fc6 = nn.Linear(in_channels, representation_size)
-        self.drop = nn.Dropout(0.5)
         self.fc7 = nn.Linear(representation_size, representation_size)
 
     def forward(self, x):
         x = x.flatten(start_dim=1)
 
         x = F.relu(self.fc6(x))
-        x = self.drop(x)
         x = F.relu(self.fc7(x))
 
         return x

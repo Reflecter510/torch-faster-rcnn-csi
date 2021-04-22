@@ -1,3 +1,6 @@
+from torch._C import T
+
+
 Kaggle = True
 
 
@@ -157,13 +160,13 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "192S1ALL"
     # 实验名
-    log_name = "15-torch-unet-noSsn-bs72-drop05-lr6e4"
+    log_name = "15-torch"
     
     # 是否断点训练
     RESUME = False
     path_checkpoint = "logs/13-ori-rpnNms1-clsDrop03-192S1ALL/Epoch109-Total_Loss0.6752-Val_Loss19.3184.pth"
 
-    train_batch = 72
+    train_batch = 108
     test_bacth = 215
 
     # 设置随机数种子
@@ -173,17 +176,18 @@ if __name__ == "__main__":
     writer = SummaryWriter('logs/'+log_name+'/'+str(datetime.date.today()))
 
     # 设置主干特征提取网络类型
-    BACKBONE = "unet"
+    BACKBONE = "alexnet"
     
     # 初始化数据集参数
     if dataset_name == "TEMPORAL":
         NUM_CLASSES = 6
         N_CHANNELS = 52
-        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)
+        ANCHOR = ((2*16, 4*16,5*16,6*16,7*16,8*16,10*16),)
     else:
         NUM_CLASSES = 12
         N_CHANNELS = 90
-        ANCHOR = ((2*16, 4*16,5*16,6*16,7*16,8*16,10*16),)
+        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)
+        
     IMAGE_SHAPE = utils_base.get_IMAGE_SHAPE_from_dataset_name(dataset_name)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -225,11 +229,11 @@ if __name__ == "__main__":
     best_test_loss = 1000
 
     if True:
-        lr = 6e-4
+        lr = 1e-4
         # 起始epoch
         Freeze_Epoch = 0
         # 结束epoch
-        Unfreeze_Epoch = 220
+        Unfreeze_Epoch = 200
 
         optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
         

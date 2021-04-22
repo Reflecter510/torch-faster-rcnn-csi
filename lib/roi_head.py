@@ -340,9 +340,9 @@ class RoIHeads(nn.Module):
         box_features = self.box_roi_pool(features, proposals, image_shapes)
         
         #TODO 时间金字塔池化
-        #activity_ft, completeness_ft = self.stpp(box_features, None, [3, 3 + 10, 16])
+        activity_ft, completeness_ft = self.stpp(box_features, None, [3, 3 + 10, 16])
 
-        box_features = self.box_head(box_features)
+        box_features = self.box_head(completeness_ft)
         class_logits, box_regression = self.box_predictor(box_features)
         
         #FIXME  取消[-1,2] 转 [-1,4]  
