@@ -17,12 +17,15 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 import time
+
+
+from nets.unet_model import UNet
        
 os.system("rm input/detection-results/result*.txt")
 os.system("rm input/ground-truth/result*.txt")
 os.system("rm predict/*.png")
 
-dataset_name = "192S1ALL"
+dataset_name = "TEMPORAL"
 which_data = "test"
 IMAGE_SHAPE = utils_base.get_IMAGE_SHAPE_from_dataset_name(dataset_name)
 
@@ -35,13 +38,13 @@ else:
 加载测试集
 '''
 if dataset_name != "S":
-    num_test_instances, test_data_loader = DataUtil.get_data_loader(dataset_name, which_data, batch_size=215, shuffle = False)
+    num_test_instances, test_data_loader = DataUtil.get_data_loader(dataset_name, which_data, batch_size=278, shuffle = False)
 else:
-    num_test_instances, test_data_loader = DataUtil.get_data_S_loader(which_data, batch_size=215, shuffle = False)
+    num_test_instances, test_data_loader = DataUtil.get_data_S_loader(which_data, batch_size=278, shuffle = False)
 
 
 '''设置'''
-path_checkpoint = "logs/15-torch-cnn3511-bias3511-batch72-oneCnn384-192S1ALL/Epoch35-Total_Loss1.3369-Val_Loss0.7354.pth"  # 断点路径
+path_checkpoint = "logs/15-torch-TEMPORAL/anchor4/Epoch220-Total_Loss0.1716-Val_Loss0.2686.pth"  # 断点路径
 nms_iou = 0.01
 score_thresh = 0.0
 PLOT = False    #结果可视化
@@ -57,21 +60,27 @@ Cuda = torch.cuda.is_available()
 BACKBONE = "alexnet"
 if dataset_name == "TEMPORAL":
     NUM_CLASSES = 6
+    N_CHANNELS = 52
+    ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)#((2*16, 4*16,5*16,6*16,7*16,8*16,10*16),)
 else:
     NUM_CLASSES = 12
+    N_CHANNELS = 90
+    ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)
 
-feat_stride = utils_base.get_feat_stride(IMAGE_SHAPE[1], BACKBONE)
 
-backbone = AlexNet().features
-backbone.out_channels = 384
-anchor_generator = AnchorGenerator(sizes=((4*16,5*16,6*16,7*16,8*16,9*16,10*16),),
+if BACKBONE == "alexnet":
+    backbone = AlexNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
+elif BACKBONE == "unet":
+    backbone = UNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
+    
+anchor_generator = AnchorGenerator(sizes=ANCHOR,
                                     aspect_ratios=((1.0),))
 
 roi_pooler = MultiScaleRoIAlign(featmap_names=['0'],
                                                     output_size=(16,1),
                                                     sampling_ratio=0)
 model = FasterRCNN(backbone,
-                    num_classes=13,
+                    num_classes=NUM_CLASSES+1,
                     rpn_anchor_generator=anchor_generator,
                     box_roi_pool=roi_pooler).to(device)
 
@@ -109,14 +118,14 @@ for (data, bbox, label) in tqdm(test_data_loader):
             if not my_map.get(mkey, False):
                 my_map.update({mkey:0})
             my_map[mkey] += 1
-        if Cuda:
-            torch.cuda.synchronize()   #增加同步操作
+        # if Cuda:
+        #     torch.cuda.synchronize()   #增加同步操作
         start = time.time()
 
         predictions = model(dataV.unsqueeze(3))
 
-        if Cuda:
-            torch.cuda.synchronize() #增加同步操作
+        # if Cuda:
+        #     torch.cuda.synchronize() #增加同步操作
         end = time.time()
         _time += (end-start)
 
@@ -184,16 +193,16 @@ for (data, bbox, label) in tqdm(test_data_loader):
                     plt.close()
                 #break
 
-            resultFile = open("input/detection-results/result"+str(i)+".txt", "w")
-            j = idx
-            resultFile.write("%s %.6f %f %f %f %f\n"%(actions[int(label[j])], conf[j], bbox[j][0], 0, bbox[j][1], 90))
-            resultFile.close()
-            groundFile = open("input/ground-truth/result"+str(i)+".txt", "w")
-            #for j in range(0, bboxV[idp].shape[0]):
-            groundFile.write("%s %f %f %f %f\n"%(actions[int(labelV[idp][0])], bboxV[idp][0], 0, bboxV[idp][1], 90))
-            groundFile.close()
+            # resultFile = open("input/detection-results/result"+str(i)+".txt", "w")
+            # j = idx
+            # resultFile.write("%s %.6f %f %f %f %f\n"%(actions[int(label[j])], conf[j], bbox[j][0], 0, bbox[j][1], 90))
+            # resultFile.close()
+            # groundFile = open("input/ground-truth/result"+str(i)+".txt", "w")
+            # #for j in range(0, bboxV[idp].shape[0]):
+            # groundFile.write("%s %f %f %f %f\n"%(actions[int(labelV[idp][0])], bboxV[idp][0], 0, bboxV[idp][1], 90))
+            # groundFile.close()
 
-            print("预测:", bbox[idx].tolist()," ", str(conf[idx].tolist())[:5], " ",label[idx], " 真实:",bboxV[idp].tolist(), labelV[idp].tolist(), "iou=", max_iou)
+            #print("预测:", bbox[idx].tolist()," ", str(conf[idx].tolist())[:5], " ",label[idx], " 真实:",bboxV[idp].tolist(), labelV[idp].tolist(), "iou=", max_iou)
             if int(label[idx])==int(labelV[idp][0]):
                 acc = acc + 1
             ious_all += max_iou

@@ -152,10 +152,10 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
     
 if __name__ == "__main__":
     if Kaggle is True:
-        DataUtil.home_dir = "../input/mydata/S1"
+        DataUtil.home_dir = "../input/my"
     
     # 设置训练的数据集
-    dataset_name = "192S1ALL"
+    dataset_name = "TEMPORAL"
     # 实验名
     log_name = "15-torch-2flow"
     
@@ -163,8 +163,8 @@ if __name__ == "__main__":
     RESUME = False
     path_checkpoint = "logs/13-ori-rpnNms1-clsDrop03-192S1ALL/Epoch109-Total_Loss0.6752-Val_Loss19.3184.pth"
 
-    train_batch = 108
-    test_bacth = 215
+    train_batch = 62
+    test_bacth = 278
 
     # 设置随机数种子
     setup_seed(510)
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     if dataset_name == "TEMPORAL":
         NUM_CLASSES = 6
         N_CHANNELS = 52
-        ANCHOR = ((2*16, 4*16,5*16,6*16,7*16,8*16,10*16),(2*16, 4*16,5*16,6*16,7*16,8*16,10*16))
+        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
     else:
         NUM_CLASSES = 12
         N_CHANNELS = 90
@@ -231,7 +231,7 @@ if __name__ == "__main__":
         # 起始epoch
         Freeze_Epoch = 0
         # 结束epoch
-        Unfreeze_Epoch = 200
+        Unfreeze_Epoch = 260
 
         optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
         
