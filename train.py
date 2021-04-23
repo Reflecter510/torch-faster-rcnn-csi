@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "TEMPORAL"
     # 实验名
-    log_name = "15-torch-2flow-my+unet_outC64"
+    log_name = "15-torch-2flow-my+unet_outC64_noSSN"
     
     # 初始化数据集参数
     if dataset_name == "TEMPORAL":
