@@ -30,20 +30,20 @@ class Feature(nn.Module):
     def __init__(self, n_channels=52, out_channels=384):
         super().__init__()
         self.out_channels = out_channels
-        self.layer1 = CnnBlock(n_channels, 128, kernel_size=11, stride=4, padding=2, pool=True)
-        self.layer2 = CnnBlock(128, 192, kernel_size=5, stride=1, padding=2)
-        self.layer3 = CnnBlock(192, self.out_channels, kernel_size=3, stride=1, padding=1)
+        self.layer1 = CnnBlock(n_channels, self.out_channels, kernel_size=11, stride=4, padding=2, pool=True)
+        self.layer2 = CnnBlock(n_channels, self.out_channels, kernel_size=5, stride=1, padding=2)
+        self.layer3 = CnnBlock(n_channels, self.out_channels, kernel_size=3, stride=1, padding=1)
 
-        self.layer4 = UNet_features(n_channels=n_channels)#CnnBlock(n_channels, 384, kernel_size=11, stride=4, padding=2, pool=True)
+        #self.layer4 = UNet_features(n_channels=n_channels)#CnnBlock(n_channels, 384, kernel_size=11, stride=4, padding=2, pool=True)
 
     def forward(self, x):
         x1 = self.layer1(x)
-        x2 = self.layer2(x1)
-        x3 = self.layer3(x2)
+        x2 = self.layer2(x)
+        x3 = self.layer3(x)
 
-        x4 = self.layer4(x)
+        #x4 = self.layer4(x)
         
-        return OrderedDict([('0', x3),('1', x4)])
+        return OrderedDict([('0', x1),('1', x2), ('2', x3)])
 
 class AlexNet(nn.Module):
     out_channels = 384

@@ -17,7 +17,7 @@ import random
 import datetime
 
 import utils_base
-
+import time
 
 from lib.pool import MultiScaleRoIAlign
 from lib.Faster_RCNN import FasterRCNN
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "TEMPORAL"
     # 实验名
-    log_name = "15-torch-2flow-my+unet_outC64_noSSN"
+    log_name = "15-torch-3flow"
     
     # 初始化数据集参数
     if dataset_name == "TEMPORAL":
@@ -162,7 +162,7 @@ if __name__ == "__main__":
         N_CHANNELS = 52
         train_batch = 62
         test_bacth = 278
-        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
+        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
         if Kaggle is True:
             DataUtil.home_dir = "../input/my"
     else:
@@ -170,7 +170,7 @@ if __name__ == "__main__":
         N_CHANNELS = 90
         train_batch = 108
         test_bacth = 215
-        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
+        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
         if Kaggle is True:
             DataUtil.home_dir = "../input/mydata/S1"
             
@@ -185,14 +185,14 @@ if __name__ == "__main__":
     setup_seed(510)
     # 设置loss绘制日志保存路径
     log_name += "-"+dataset_name
-    writer = SummaryWriter('logs/'+log_name+'/'+str(datetime.date.today()))
+    writer = SummaryWriter('logs/'+log_name+'/'+str(datetime.date.today())+"_"+str(time.time())[-5:])
 
     IMAGE_SHAPE = utils_base.get_IMAGE_SHAPE_from_dataset_name(dataset_name)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # 初始化网络结构
     if BACKBONE == "alexnet":
-        backbone = Feature(N_CHANNELS, 64)    #双流
+        backbone = Feature(N_CHANNELS, 384)    #双流
         #backbone = AlexNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
     elif BACKBONE == "unet":
         backbone = UNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     anchor_generator = AnchorGenerator(sizes=ANCHOR,
                                     aspect_ratios=((1.0),))
 
-    roi_pooler = MultiScaleRoIAlign(featmap_names=['0','1'],
+    roi_pooler = MultiScaleRoIAlign(featmap_names=['0','1', '2'],
                                                     output_size=(16,1),
                                                     sampling_ratio=0)
     model = FasterRCNN(backbone,
@@ -277,7 +277,7 @@ if __name__ == "__main__":
     
 
     # log保存路径
-    writer = SummaryWriter('logs_map/'+str(datetime.date.today())+"_"+log_name)
+    writer = SummaryWriter('logs_map/'+str(datetime.date.today())+"_"+log_name+"_"+str(time.time())[-5:])
     # 模型保存文件夹
     dirs = 'logs/'+log_name
     # 训练集还是测试集
