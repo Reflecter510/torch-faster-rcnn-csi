@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "TEMPORAL"
     # 实验名
-    log_name = "15-torch-3flow"
+    log_name = "15-torch"
     
     # 初始化数据集参数
     if dataset_name == "TEMPORAL":
@@ -162,7 +162,8 @@ if __name__ == "__main__":
         N_CHANNELS = 52
         train_batch = 62
         test_bacth = 278
-        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
+        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)
+        #ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
         if Kaggle is True:
             DataUtil.home_dir = "../input/my"
     else:
@@ -170,7 +171,8 @@ if __name__ == "__main__":
         N_CHANNELS = 90
         train_batch = 108
         test_bacth = 215
-        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
+        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)
+        #ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
         if Kaggle is True:
             DataUtil.home_dir = "../input/mydata/S1"
             
@@ -192,15 +194,14 @@ if __name__ == "__main__":
 
     # 初始化网络结构
     if BACKBONE == "alexnet":
-        backbone = Feature(N_CHANNELS, 384)    #双流
-        #backbone = AlexNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
+        #backbone = Feature(N_CHANNELS, 384)    #双流
+        backbone = AlexNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
     elif BACKBONE == "unet":
         backbone = UNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
-    
     anchor_generator = AnchorGenerator(sizes=ANCHOR,
                                     aspect_ratios=((1.0),))
 
-    roi_pooler = MultiScaleRoIAlign(featmap_names=['0','1', '2'],
+    roi_pooler = MultiScaleRoIAlign(featmap_names=['0'],
                                                     output_size=(16,1),
                                                     sampling_ratio=0)
     model = FasterRCNN(backbone,
