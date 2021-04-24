@@ -46,7 +46,7 @@ else:
 
 
 '''设置'''
-path_checkpoint = "logs/15-torch-TEMPORAL/anchor4/Epoch220-Total_Loss0.1716-Val_Loss0.2686.pth"  # 断点路径
+path_checkpoint = "logs\\15-torch\\Epoch190-Total_Loss0.2849-Val_Loss0.3886.pth"#"logs/15-torch-TEMPORAL/anchor4/Epoch220-Total_Loss0.1716-Val_Loss0.2686.pth"  # 断点路径
 nms_iou = 0.01
 score_thresh = 0.0
 PLOT = False    #结果可视化
@@ -63,11 +63,11 @@ BACKBONE = "alexnet"
 if dataset_name == "TEMPORAL":
     NUM_CLASSES = 6
     N_CHANNELS = 52
-    ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))#((2*16, 4*16,5*16,6*16,7*16,8*16,10*16),)
+    ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)#(4*16,5*16,6*16,7*16,8*16,9*16,10*16))#((2*16, 4*16,5*16,6*16,7*16,8*16,10*16),)
 else:
     NUM_CLASSES = 12
     N_CHANNELS = 90
-    ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
+    ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)#(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
 
 
 if BACKBONE == "alexnet":
