@@ -1,4 +1,4 @@
-Kaggle = True
+Kaggle = False
 
 
 
@@ -152,7 +152,7 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
     
 if __name__ == "__main__":
     # 设置训练的数据集
-    dataset_name = "TEMPORAL"
+    dataset_name = "192S1ALL"
     # 实验名
     log_name = "15-torch"
     
