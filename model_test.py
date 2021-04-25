@@ -25,7 +25,7 @@ os.system("rm input/detection-results/result*.txt")
 os.system("rm input/ground-truth/result*.txt")
 os.system("rm predict/*.png")
 
-dataset_name = "192S1ALL"
+dataset_name = "TEMPORAL"
 which_data = "test"
 IMAGE_SHAPE = utils_base.get_IMAGE_SHAPE_from_dataset_name(dataset_name)
 
@@ -48,10 +48,10 @@ else:
 '''设置'''
 # temporal  logs\\15-torch-TEMPORAL\\anchor4-bs36\\Epoch250-Total_Loss0.1010-Val_Loss0.2589.pth
 # s1        logs\\15-torch\\Epoch190-Total_Loss0.2849-Val_Loss0.3886.pth
-path_checkpoint = "logs\\15-torch\\Epoch190-Total_Loss0.2849-Val_Loss0.3886.pth" # 断点路径
+path_checkpoint = "logs\\15-torch-TEMPORAL\\anchor4-bs36\\Epoch250-Total_Loss0.1010-Val_Loss0.2589.pth" # 断点路径
 nms_iou = 0.01
 score_thresh = 0.0
-PLOT = True    #结果可视化
+PLOT = False    #结果可视化
 SHOW = False
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

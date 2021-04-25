@@ -40,7 +40,7 @@ def get_data_loader(dataset_name, data_type, batch_size, shuffle=False):
     dataset, num_instances = load_dataset(dataset_name, data_type)
 
     # 数据增强：噪声
-    #dataset, num_instances = data_argumentation(dataset, num_instances)
+    dataset, num_instances = data_argumentation(dataset, num_instances)
     
     data_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
     return num_instances, data_loader

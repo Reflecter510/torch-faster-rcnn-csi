@@ -1,4 +1,4 @@
-Kaggle = False
+Kaggle = True
 
 
 
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "192S1ALL"
     # 实验名
-    log_name = "15-torch"
+    log_name = "15-torch-DA"
     
     # 初始化数据集参数
     if dataset_name == "TEMPORAL":
