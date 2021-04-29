@@ -20,16 +20,19 @@ import time
 from nets.unet_model import UNet
        
 # 数据集设置
-dataset_name = "192S1ALL"
+dataset_name = "TEMPORAL"
 which_data = "test"
 
 '''模型断点路径'''
 # temporal  logs\\15-torch-TEMPORAL\\anchor4-bs36\\Epoch250-Total_Loss0.1010-Val_Loss0.2589.pth
 # s1        logs\\15-torch\\Epoch190-Total_Loss0.2849-Val_Loss0.3886.pth
-path_checkpoint = "logs\\15-torch\\Epoch190-Total_Loss0.2849-Val_Loss0.3886.pth" # 断点路径
+if dataset_name=="TEMPORAL":
+    path_checkpoint = "logs\\15-torch-TEMPORAL\\anchor4-bs36\\Epoch250-Total_Loss0.1010-Val_Loss0.2589.pth" # 断点路径
+elif dataset_name=="192S1ALL":
+    path_checkpoint = "logs\\15-torch\\Epoch190-Total_Loss0.2849-Val_Loss0.3886.pth" # 断点路径
 
 #结果可视化
-PLOT = True    
+PLOT = False    
 SHOW = False
 
 # 主干特征提取网络
@@ -139,7 +142,7 @@ for (data, bbox, label) in tqdm(test_data_loader):
             
             if PLOT:
                 X=np.linspace(0,192,192,endpoint=True)
-                plt.contourf(dataV[0].cpu())
+                plt.contourf(dataV[idp].cpu())
                 plt.colorbar()
 
                 currentAxis=plt.gca()
