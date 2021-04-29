@@ -154,7 +154,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "TEMPORAL"
     # 实验名
-    log_name = "15-torch-DA"
+    log_name = "15-torch-SGD_m01-lr5e4"
     
     # 初始化数据集参数
     if dataset_name == "TEMPORAL":
@@ -230,13 +230,13 @@ if __name__ == "__main__":
     best_test_loss = 1000
 
     if True:
-        lr = 1e-4
+        lr = 5e-4
         # 起始epoch
         Freeze_Epoch = 0
         # 结束epoch
-        Unfreeze_Epoch = 260
+        Unfreeze_Epoch = 360
 
-        optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
+        optimizer = optim.SGD(net.parameters(),lr,weight_decay=5e-4, momentum=0.1)
         
         #optimizer = SWA(optimizer)#, swa_start=10, swa_freq=5, swa_lr=0.05)	
 
