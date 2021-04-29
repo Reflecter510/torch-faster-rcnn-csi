@@ -79,9 +79,6 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
                                 'roi_cls'  : roi_cls_loss.item() / (iteration + 1), 
                                 'lr'       : get_lr(optimizer)})
             pbar.update(1)
-    #         if iteration >= 10 and iteration % 5 == 0:
-    #             train_util.optimizer.update_swa()
-    # train_util.optimizer.swap_swa_sgd()
     writer.add_scalar('train_loss', total_loss/(epoch_size+1), epoch)
     writer.add_scalar('train_roi_cls_loss', roi_cls_loss/len(gen),epoch)
     writer.add_scalar('train_roi_loc_loss', roi_loc_loss/len(gen),epoch)
@@ -154,7 +151,7 @@ if __name__ == "__main__":
     # 设置训练的数据集
     dataset_name = "TEMPORAL"
     # 实验名
-    log_name = "15-torch-SGD_m01-lr1e2"
+    log_name = "15-torch-SGD_m01-lr5e2"
     
     # 初始化数据集参数
     if dataset_name == "TEMPORAL":
@@ -230,7 +227,7 @@ if __name__ == "__main__":
     best_test_loss = 1000
 
     if True:
-        lr = 1e-2
+        lr = 5e-2
         # 起始epoch
         Freeze_Epoch = 0
         # 结束epoch
@@ -238,7 +235,7 @@ if __name__ == "__main__":
 
         optimizer = optim.SGD(net.parameters(),lr,weight_decay=5e-4, momentum=0.1)
         
-        #optimizer = SWA(optimizer)#, swa_start=10, swa_freq=5, swa_lr=0.05)	
+        #optimizer = SWA(optimizer)#, swa_start=10, swa_freq=5, swa_lr=1e-2)	
 
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.99)
 
@@ -262,6 +259,9 @@ if __name__ == "__main__":
         for epoch in range(Freeze_Epoch,Unfreeze_Epoch):
             fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,gen_val,Unfreeze_Epoch,Cuda, best_train_loss, best_test_loss)
             lr_scheduler.step()
+        #     if (epoch+1) >= 10 and (epoch+1) % 5 == 0:
+        #         optimizer.update_swa()
+        # optimizer.swap_swa_sgd()
 
     writer.close()
 
