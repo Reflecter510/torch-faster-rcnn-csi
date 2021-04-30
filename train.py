@@ -146,7 +146,7 @@ if __name__ == "__main__":
     dataset = S1P1
    
     # 设置实验名
-    log_name = "15-torch-vgg-lr2e4Step2"
+    log_name = "15-torch-vgg-lr3e4"
     
     # 设置主干特征提取网络类型
     BACKBONE = "alexnet"
@@ -194,7 +194,7 @@ if __name__ == "__main__":
 
     if True:
         # 设置学习率
-        lr = 2e-4
+        lr = 3e-4
         # 设置起始epoch
         Freeze_Epoch = 0
         # 设置结束epoch
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 
         optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
         #optimizer = SWA(optimizer)#, swa_start=10, swa_freq=5, swa_lr=1e-2)	
-        lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=2,gamma=0.99)
+        lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.99)
 
         # 恢复断点
         if RESUME:
