@@ -1,7 +1,5 @@
-Kaggle = True
-
-
-
+from nets.model import get_model
+from dataset import TEMPORAL
 from nets.unet_model import UNet
 from torch.autograd import Variable
 from trainer import FasterRCNNTrainer
@@ -15,14 +13,8 @@ from tensorboardX import SummaryWriter
 import random
 #from torchcontrib.optim import SWA
 import datetime
-
-import utils_base
 import time
 
-from lib.pool import MultiScaleRoIAlign
-from lib.Faster_RCNN import FasterRCNN
-from torchvision.models.detection.rpn import AnchorGenerator
-from nets.alexnet import AlexNet, Feature
 
 def setup_seed(seed):
      torch.manual_seed(seed)
@@ -64,7 +56,7 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
                     boxes = [Variable((box).type(torch.FloatTensor)) for box in boxes]
                     labels = [Variable((label).type(torch.FloatTensor)) for label in labels]
             
-            losses = train_util.train_step(imgs, boxes, labels, 1)
+            losses = train_util.train_step(imgs, boxes, labels)
             rpn_loc, rpn_cls, roi_loc, roi_cls, total = losses
             total_loss += total
             rpn_loc_loss += rpn_loc
@@ -113,7 +105,7 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
                     labels = [Variable((label).type(torch.FloatTensor)) for label in labels]
 
                 train_util.optimizer.zero_grad()
-                losses = train_util.forward(imgs, boxes, labels, 1)
+                losses = train_util.forward(imgs, boxes, labels)
                 rpn_loc, rpn_cls, roi_loc, roi_cls, val_total = losses
                 val_toal_loss += val_total
                 rpn_loc_loss += rpn_loc
@@ -148,70 +140,44 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
         torch.save(checkpoint, 'logs/'+log_name+'/Epoch%d-Total_Loss%.4f-Val_Loss%.4f.pth'%((epoch+1),total_loss/(epoch_size+1),val_toal_loss/(epoch_size_val+1)))
     
 if __name__ == "__main__":
+    Kaggle = False
+
     # 设置训练的数据集
-    dataset_name = "TEMPORAL"
-    # 实验名
-    log_name = "15-torch-SGD_m01-lr5e2"
+    dataset = TEMPORAL
+   
+    # 设置实验名
+    log_name = "15-torch"
     
-    # 初始化数据集参数
-    if dataset_name == "TEMPORAL":
-        NUM_CLASSES = 6
-        N_CHANNELS = 52
-        train_batch = 36
-        test_bacth = 278
-        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)
-        #ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
-        if Kaggle is True:
-            DataUtil.home_dir = "../input/my"
-    else:
-        NUM_CLASSES = 12
-        N_CHANNELS = 90
-        train_batch = 108
-        test_bacth = 215
-        ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),)
-        #ANCHOR = ((4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16),(4*16,5*16,6*16,7*16,8*16,9*16,10*16))
-        if Kaggle is True:
-            DataUtil.home_dir = "../input/mydata/S1"
-            
     # 设置主干特征提取网络类型
     BACKBONE = "alexnet"
 
-    # 是否断点训练
+    # 设置是否断点训练
     RESUME = False
     path_checkpoint = "logs/13-ori-rpnNms1-clsDrop03-192S1ALL/Epoch109-Total_Loss0.6752-Val_Loss19.3184.pth"
 
-    # 设置随机数种子
+    # 初始化数据集参数
+    dataset_name = dataset.name
+    NUM_CLASSES = dataset.num_classes
+    train_batch = dataset.train_batch
+    test_bacth = dataset.test_batch
+    ANCHOR = dataset.anchor
+    IMAGE_SHAPE = dataset.image_shape
+    if Kaggle is True:
+        DataUtil.home_dir = dataset.kaggle_dir
+
+    # 初始化随机数种子
     setup_seed(510)
     # 设置loss绘制日志保存路径
     log_name += "-"+dataset_name
     writer = SummaryWriter('logs/'+log_name+'/'+str(datetime.date.today())+"_"+str(time.time())[-5:])
 
-    IMAGE_SHAPE = utils_base.get_IMAGE_SHAPE_from_dataset_name(dataset_name)
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
     # 初始化网络结构
-    if BACKBONE == "alexnet":
-        #backbone = Feature(N_CHANNELS, 384)    #双流
-        backbone = AlexNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
-    elif BACKBONE == "unet":
-        backbone = UNet(n_channels=N_CHANNELS, n_classes=NUM_CLASSES+1).features
-    anchor_generator = AnchorGenerator(sizes=ANCHOR,
-                                    aspect_ratios=((1.0),))
-
-    roi_pooler = MultiScaleRoIAlign(featmap_names=['0'],
-                                                    output_size=(16,1),
-                                                    sampling_ratio=0)
-    model = FasterRCNN(backbone,
-                    num_classes=NUM_CLASSES+1,
-                    rpn_anchor_generator=anchor_generator,
-                    box_roi_pool=roi_pooler).to(device)
-
-
-    # 设置是否使用cuda模式
     Cuda = torch.cuda.is_available()
-    print("use Cuda" if Cuda else "use Cpu")
+    device = torch.device("cuda:0" if Cuda else "cpu")
+    print("use" , device)
+    model = get_model(dataset, BACKBONE).to(device)
 
-    # 设置为训练模式
+    # 训练模式
     net = model.train()
     if Cuda:
         net = torch.nn.DataParallel(model)
@@ -227,16 +193,15 @@ if __name__ == "__main__":
     best_test_loss = 1000
 
     if True:
-        lr = 5e-2
-        # 起始epoch
+        # 设置学习率
+        lr = 1e-4
+        # 设置起始epoch
         Freeze_Epoch = 0
-        # 结束epoch
-        Unfreeze_Epoch = 350
+        # 设置结束epoch
+        Unfreeze_Epoch = 260
 
-        optimizer = optim.SGD(net.parameters(),lr,weight_decay=5e-4, momentum=0.1)
-        
+        optimizer = optim.Adam(net.parameters(),lr,weight_decay=5e-4)
         #optimizer = SWA(optimizer)#, swa_start=10, swa_freq=5, swa_lr=1e-2)	
-
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=1,gamma=0.99)
 
         # 恢复断点
@@ -266,17 +231,11 @@ if __name__ == "__main__":
     writer.close()
 
 
-    import utils_base
-    import torch
-    from tqdm import tqdm
-    from torch.autograd import Variable
-    import numpy as np
-    from utils.utils import bbox_iou, loc2bbox, nms, DecodeBox, detection_acc
+    from utils.utils import bbox_iou, detection_acc
     import os
     import re
     from tensorboardX import SummaryWriter
     
-
     # log保存路径
     writer = SummaryWriter('logs_map/'+str(datetime.date.today())+"_"+log_name+"_"+str(time.time())[-5:])
     # 模型保存文件夹
@@ -286,28 +245,11 @@ if __name__ == "__main__":
     # 是否绘制mAP
     MAP = False            
 
-    IMAGE_SHAPE = utils_base.get_IMAGE_SHAPE_from_dataset_name(dataset_name)
-    if dataset_name == "TEMPORAL":
-        actions = ['none', "1", "2", "3", "4", "5", "6"]
-    else:
-        actions = ['none', 'jump', 'pick', 'throw', 'pull', 'clap', 'box', 'wave', 'lift', 'kick', 'squat', 'turnRound', 'checkWatch']
-
+    actions = dataset.actions
     '''
     加载测试集
     '''
-    num_test_instances, test_data_loader = DataUtil.get_data_loader(dataset_name,"test",1,False)
-
-    '''设置'''
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(device)
-    Cuda = torch.cuda.is_available()
-
-    BACKBONE = "alexnet"
-    if dataset_name == "TEMPORAL":
-        NUM_CLASSES = 6
-    else:
-        NUM_CLASSES = 12
-
+    num_test_instances, test_data_loader = DataUtil.get_data_loader(dataset_name,data_type,1,False)
 
     fileList = os.listdir(dirs)
     regex = re.compile(r'\d+')
@@ -318,7 +260,6 @@ if __name__ == "__main__":
     for each in fileList:
         if len(each) < 3 or each[-3:] != "pth":
             continue
-        
         
         epoch = int(regex.findall(each)[0])
 
@@ -380,7 +321,6 @@ if __name__ == "__main__":
                         groundFile.write("%s %f %f %f %f\n"%(actions[int(labelV[j][0])], bboxV[j][0], 0, bboxV[j][1], 90))
                     groundFile.close()
 
-                #print("预测:", bbox[idx]," ", conf[idx], " ",label[idx], " 真实:",bboxV.tolist(), labelV.tolist())
                 if int(label[idx])==int(labelV[0]):
                     acc = acc + 1
                 ious_all += max_iou

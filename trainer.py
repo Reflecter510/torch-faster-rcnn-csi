@@ -22,7 +22,7 @@ class FasterRCNNTrainer(nn.Module):
         self.faster_rcnn = faster_rcnn
         self.optimizer = optimizer
 
-    def forward(self, imgs, bboxes, labels, scale):
+    def forward(self, imgs, bboxes, labels):
         bboxes = bboxes[0].view(-1, 2)
         
         targets = []
@@ -41,38 +41,10 @@ class FasterRCNNTrainer(nn.Module):
         losses = losses + [rpn_loc_loss + rpn_cls_loss + roi_loc_loss + roi_cls_loss]
         return LossTuple(*losses)
 
-    def train_step(self, imgs, bboxes, labels, scale):
+    def train_step(self, imgs, bboxes, labels):
         self.optimizer.zero_grad()
-        losses = self.forward(imgs, bboxes, labels, scale)
+        losses = self.forward(imgs, bboxes, labels)
         #losses.total_loss += self.reg_loss(self.faster_rcnn)
         losses.total_loss.backward()
         self.optimizer.step()
         return losses
-
-def _smooth_l1_loss(x, t, in_weight, sigma):
-    sigma2 = sigma ** 2   # 1^2
-    in_weight = in_weight
-
-
-    diff = in_weight * (x-t)
-    abs_diff = diff.abs()    #|x-y|
-
-    flag = (abs_diff.data < (1. / sigma2)).float()  #|x-y|<1
-    y = (flag * (sigma2 / 2.) * (diff ** 2) + (1 - flag) * (abs_diff - 0.5 / sigma2))
-    return y.sum()
-
-
-def _fast_rcnn_loc_loss(pred_loc, gt_loc, gt_label, sigma):
-    in_weight = torch.zeros(gt_loc.shape)
-    in_weight[(gt_label > 0).view(-1, 1).expand_as(in_weight)] = 1
-
-    if pred_loc.is_cuda:
-        pred_loc = pred_loc.cuda()
-        gt_loc = gt_loc.cuda()
-        in_weight = in_weight.cuda()
-        
-    # smooth_l1损失函数
-    loc_loss = _smooth_l1_loss(pred_loc, gt_loc, in_weight.detach(), sigma)
-    # 进行标准化
-    loc_loss /= ((gt_label >= 0).sum().float())
-    return loc_loss

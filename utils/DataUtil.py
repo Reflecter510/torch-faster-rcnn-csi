@@ -35,7 +35,7 @@ def load_dataset(dataset_name, data_type):
 
 def get_data_loader(dataset_name, data_type, batch_size, shuffle=False):
     if dataset_name == "S":
-        return get_data_S_loader(data_type, batch_size, shuffle)
+        return _get_data_S_loader(data_type, batch_size, shuffle)
         
     dataset, num_instances = load_dataset(dataset_name, data_type)
 
@@ -46,7 +46,7 @@ def get_data_loader(dataset_name, data_type, batch_size, shuffle=False):
     return num_instances, data_loader
 
 
-def get_data_S_loader(data_type, batch_size, shuffle=False):
+def _get_data_S_loader(data_type, batch_size, shuffle=False):
 
     dataset_S1, num_instances_S1 = load_dataset("192S1ALL", data_type)
 
