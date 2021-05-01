@@ -143,7 +143,7 @@ if __name__ == "__main__":
     Kaggle = True
 
     # 设置训练的数据集
-    dataset = S1P1
+    dataset = TEMPORAL
    
     # 设置实验名
     log_name = "15-torch-vgg-lr3e4Step2"
