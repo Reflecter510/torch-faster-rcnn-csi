@@ -1,3 +1,5 @@
+from collections import OrderedDict
+from nets.alexnet import CnnBlock
 import torch
 import torch.nn as nn
 import torchvision
@@ -100,6 +102,25 @@ class LossFunction(nn.Module):
     def forward(self, x, y):
         k = torch.nn.functional.cross_entropy(x, y.long(), ignore_index=-1)
         return k
+
+class Vgg2FLow(nn.Module):
+    def __init__(self, n_channels=52, out_channels=512):
+        super().__init__()
+        self.out_channels = out_channels
+        self.layer1 =  nn.Sequential(
+            CnnBlock(n_channels, 128, kernel_size=11, stride=4, padding=2, pool=True),
+            CnnBlock(128, 192, kernel_size=5, stride=1, padding=2),
+            CnnBlock(192, self.out_channels, kernel_size=3, stride=1, padding=1)
+        )
+
+        self.layer2,_ =decom_vgg16(in_channels=n_channels) 
+
+    def forward(self, x):
+        x1 = self.layer1(x)
+        x2 = self.layer2(x)
+        
+        return OrderedDict([('0', x1),('1', x2)])
+
 
 if __name__ == '__main__':
     vgg,cls = decom_vgg16()
