@@ -8,15 +8,17 @@ from torch import nn
 from torchvision.models.detection.anchor_utils import AnchorGenerator
 
 def get_model(dataset, BACKBONE):
-    if BACKBONE == "alexnet":
-        #backbone = Feature(IMAGE_SHAPE[0], 384)    #双流
-        #backbone,_ = decom_vgg16(dataset.image_shape[0])
+    n_channels = dataset.image_shape[0]
+    n_classes = dataset.num_classes + 1
 
-        #backbone = Vgg2FLow(dataset.image_shape[0])
-
-        backbone = AlexNet(n_channels=dataset.image_shape[0], n_classes=dataset.num_classes+1).features
+    if BACKBONE == "vgg":
+        backbone,_ = decom_vgg16(n_channels)
+    elif BACKBONE == "alexnet":
+        #backbone = Feature(n_channels, 384)    #扁平alex三流
+        #backbone = Vgg2FLow(n_channels)        #vgg alex 双流
+        backbone = AlexNet(n_channels, n_classes).features
     elif BACKBONE == "unet":
-        backbone = UNet(n_channels=dataset.image_shape[0], n_classes=dataset.num_classes+1).features
+        backbone = UNet(n_channels, n_classes).features
     
     anchor_generator = AnchorGenerator(sizes=dataset.anchor,
                                     aspect_ratios=((1.0),))
@@ -25,7 +27,7 @@ def get_model(dataset, BACKBONE):
                                                     output_size=(16,1),
                                                     sampling_ratio=0)
     model = FasterRCNN(backbone,
-                    num_classes=dataset.num_classes+1,
+                    num_classes=n_classes,
                     rpn_anchor_generator=anchor_generator,
                     box_roi_pool=roi_pooler)
     

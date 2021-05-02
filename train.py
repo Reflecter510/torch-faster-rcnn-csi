@@ -146,10 +146,10 @@ if __name__ == "__main__":
     dataset = TEMPORAL
    
     # 设置实验名
-    log_name = "15-torch-lr3e4Step2"
+    log_name = "16-torch-vgg"
     
     # 设置主干特征提取网络类型
-    BACKBONE = "alexnet"
+    BACKBONE = "vgg"
 
     # 设置是否断点训练
     RESUME = False
