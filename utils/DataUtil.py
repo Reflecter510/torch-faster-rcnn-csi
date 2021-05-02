@@ -40,7 +40,7 @@ def get_data_loader(dataset_name, data_type, batch_size, shuffle=False):
     dataset, num_instances = load_dataset(dataset_name, data_type)
 
     # 数据增强：噪声
-    #dataset, num_instances = data_argumentation(dataset, num_instances)
+    dataset, num_instances = data_argumentation(dataset, num_instances)
     
     data_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
     return num_instances, data_loader
@@ -72,10 +72,10 @@ def data_argumentation(dataset, num_instances):
         bboxs.append(bbox)
         labels.append(label)
 
-        tmp2 = salt_and_pepper(data.clone(), 0.03)
-        datas.append(tmp2)
-        bboxs.append(bbox)
-        labels.append(label)
+        # tmp2 = salt_and_pepper(data.clone(), 0.03)
+        # datas.append(tmp2)
+        # bboxs.append(bbox)
+        # labels.append(label)
     datas = torch.cat(datas).unsqueeze(1)
     bboxs = torch.cat(bboxs).view(-1,2)
     labels = torch.cat(labels).view(-1,1)

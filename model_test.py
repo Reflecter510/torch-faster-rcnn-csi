@@ -15,18 +15,18 @@ os.system("rm predict/*.png")
 
 # 数据集设置
 dataset = TEMPORAL
-which_data = "test"
+which_data = "train"
 
 '''模型断点路径'''
 # temporal  logs\\15-torch-TEMPORAL\\anchor4-bs36\\Epoch250-Total_Loss0.1010-Val_Loss0.2589.pth
 # s1        logs\\15-torch\\Epoch190-Total_Loss0.2849-Val_Loss0.3886.pth
-path_checkpoint = "logs\\15-torch-TEMPORAL\\anchor4-bs36\\Epoch250-Total_Loss0.1010-Val_Loss0.2589.pth"
+path_checkpoint = "D:\\Downloads\\15-torch-vgg-lr3e4Step2  TEMPORAL\\Epoch205-Total_Loss0.0148-Val_Loss0.3367.pth"
 
 #结果可视化
 PLOT = False    
 
 # 主干特征提取网络
-BACKBONE = "alexnet"
+BACKBONE = "vgg"
 
 #--------------------------------------------------------------------------------------------
 dataset_name = dataset.name
