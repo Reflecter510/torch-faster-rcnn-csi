@@ -59,6 +59,7 @@ model = model.eval()
 np.set_printoptions(suppress=True)
 ious_all = 0
 detection_all = 0.0
+final_all = 0.0
 acc = 0.0
 cnt = 0
 i = 0
@@ -95,7 +96,8 @@ for (data, bbox, label) in tqdm(test_data_loader):
 
             max_iou = bbox_iou(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV[idp].view(1,2)))[0][0]
             dete_acc = detection_acc(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV[idp].view(1,2)))[0][0]
-            
+            final_acc = detection_acc(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV[idp].view(1,2)), ACC=int(label[idx])==int(labelV[idp][0]))[0][0]
+
             if PLOT:
                 X=np.linspace(0,192,192,endpoint=True)
                 plt.contourf(dataV[idp].cpu())
@@ -121,15 +123,18 @@ for (data, bbox, label) in tqdm(test_data_loader):
                 acc = acc + 1
             ious_all += max_iou
             detection_all += dete_acc
+            final_all += final_acc
 
             cnt+=1
 
 ious_all /= i
 detection_all /= i
+final_all /= i
 acc /= i
 _time /= i
 print("有效预测：",cnt)
 print("IOU: ",ious_all)
-print("检测精度: ",detection_all)
 print("分类准确度：", acc)
+print("检测精度: ",detection_all)
+print("检测分类精度: ",final_all)
 print("平均每份预测时间：", _time,"秒")

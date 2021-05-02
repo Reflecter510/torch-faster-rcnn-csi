@@ -282,6 +282,7 @@ if __name__ == "__main__":
         np.set_printoptions(suppress=True)
         ious_all = 0
         dete_all = 0.0
+        final_all = 0.0
         acc = 0.0
         cnt = 0
         i = 0
@@ -308,7 +309,7 @@ if __name__ == "__main__":
                 idx = 0
                 max_iou = bbox_iou(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV.tolist()))[0][0]
                 dete_acc = detection_acc(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV.tolist()))[0][0]
-
+                final_acc = detection_acc(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV.tolist()), int(label[idx])==int(labelV[0]))[0][0]
                 i+=1
                 if MAP:
                     resultFile = open("input/detection-results/result"+str(i)+".txt", "w")
@@ -325,7 +326,7 @@ if __name__ == "__main__":
                     acc = acc + 1
                 ious_all += max_iou
                 dete_all += dete_acc
-
+                final_all += final_acc
                 cnt+=1
 
         print("Epoch:",epoch," 有效预测：",cnt)
@@ -333,13 +334,16 @@ if __name__ == "__main__":
             continue
         
         dete_all /= num_test_instances
+        final_all /= num_test_instances
         ious_all /= num_test_instances
         acc /= num_test_instances
         print("IOU: ",ious_all)
-        print("检测精度: ",dete_all)
         print("分类准确度：", acc)
+        print("检测精度: ",dete_all)
+        print("检测分类精度: ",final_all)
         writer.add_scalar(data_type+"_IOU", ious_all, epoch)
         writer.add_scalar(data_type+"_detection", dete_all, epoch)
+        writer.add_scalar(data_type+"_final", final_all, epoch)
         writer.add_scalar(data_type+'_ACC', acc, epoch)
         writer.add_scalar(data_type+'_CNT', cnt, epoch)
     writer.close()
