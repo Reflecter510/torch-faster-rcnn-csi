@@ -146,7 +146,7 @@ if __name__ == "__main__":
     dataset = TEMPORAL
    
     # 设置实验名
-    log_name = "16-torch-vgg2flow"
+    log_name = "15-torch-lr3e4Step2"
     
     # 设置主干特征提取网络类型
     BACKBONE = "alexnet"

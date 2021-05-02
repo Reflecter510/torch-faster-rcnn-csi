@@ -12,16 +12,16 @@ def get_model(dataset, BACKBONE):
         #backbone = Feature(IMAGE_SHAPE[0], 384)    #双流
         #backbone,_ = decom_vgg16(dataset.image_shape[0])
 
-        backbone = Vgg2FLow(dataset.image_shape[0])
+        #backbone = Vgg2FLow(dataset.image_shape[0])
 
-        #backbone = AlexNet(n_channels=dataset.image_shape[0], n_classes=dataset.num_classes+1).features
+        backbone = AlexNet(n_channels=dataset.image_shape[0], n_classes=dataset.num_classes+1).features
     elif BACKBONE == "unet":
         backbone = UNet(n_channels=dataset.image_shape[0], n_classes=dataset.num_classes+1).features
     
     anchor_generator = AnchorGenerator(sizes=dataset.anchor,
                                     aspect_ratios=((1.0),))
 
-    roi_pooler = MultiScaleRoIAlign(featmap_names=['0','1'],
+    roi_pooler = MultiScaleRoIAlign(featmap_names=['0'],
                                                     output_size=(16,1),
                                                     sampling_ratio=0)
     model = FasterRCNN(backbone,
