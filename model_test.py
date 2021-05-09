@@ -1,6 +1,6 @@
 import os
 from nets.model import get_model
-from dataset import TEMPORAL
+from dataset import S1P1, TEMPORAL
 import torch
 from tqdm import tqdm
 from torch.autograd import Variable
@@ -15,18 +15,22 @@ os.system("rm predict/*.png")
 
 # 数据集设置
 dataset = TEMPORAL
-which_data = "train"
+which_data = "test"
 
 '''模型断点路径'''
+# my cnn
 # temporal  logs\\15-torch-TEMPORAL\\anchor4-bs36\\Epoch250-Total_Loss0.1010-Val_Loss0.2589.pth
 # s1        logs\\15-torch\\Epoch190-Total_Loss0.2849-Val_Loss0.3886.pth
-path_checkpoint = "D:\\Downloads\\15-torch-vgg-lr3e4Step2  TEMPORAL\\Epoch205-Total_Loss0.0148-Val_Loss0.3367.pth"
+# vgg
+# "D:\\Downloads\\15-torch-vgg-lr3e4Step2  TEMPORAL\\Epoch205-Total_Loss0.0148-Val_Loss0.3367.pth"
+# "D:\\Downloads\\15-torch-vgg-lr3e4Step2 S1\\Epoch155-Total_Loss0.0299-Val_Loss0.5459.pth"
+path_checkpoint =  "logs\\15-torch-TEMPORAL\\anchor4-bs36\\Epoch250-Total_Loss0.1010-Val_Loss0.2589.pth"
 
 #结果可视化
 PLOT = False    
 
 # 主干特征提取网络
-BACKBONE = "vgg"
+BACKBONE = "alexnet"
 
 #--------------------------------------------------------------------------------------------
 dataset_name = dataset.name
