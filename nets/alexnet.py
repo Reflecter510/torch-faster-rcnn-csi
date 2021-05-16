@@ -1,6 +1,6 @@
 
 from collections import OrderedDict
-from nets.unet_model import UNet_features
+
 from torch.functional import Tensor
 import torch.nn as nn
 import torch
@@ -14,7 +14,8 @@ class CnnBlock(nn.Module):
         self.layer = nn.Conv2d(in_channels, out_channels, kernel_size=(kernel_size,1), stride=(stride,1), padding=(padding,0))
         self.BN = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=(3,1), stride=(2,1))
+        if self.pool :
+            self.maxpool = nn.MaxPool2d(kernel_size=(3,1), stride=(2,1))
 
     def forward(self, x):
         x = self.layer(x)

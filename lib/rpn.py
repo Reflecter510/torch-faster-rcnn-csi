@@ -224,6 +224,7 @@ class RegionProposalNetwork(torch.nn.Module):
         final_boxes = []
         final_scores = []
         for boxes, scores, lvl, img_shape in zip(proposals, objectness_prob, levels, image_shapes):
+            '''裁剪防止超出边界'''
             boxes = box_ops.clip_boxes_to_image(boxes, img_shape)
 
             # remove small boxes
@@ -235,6 +236,8 @@ class RegionProposalNetwork(torch.nn.Module):
             keep = torch.where(scores >= self.score_thresh)[0]
             boxes, scores, lvl = boxes[keep], scores[keep], lvl[keep]
 
+
+            '''非极大值抑制'''
             # non-maximum suppression, independently done per level
             keep = box_ops.batched_nms(boxes, scores, lvl, self.nms_thresh)
 
@@ -308,7 +311,11 @@ class RegionProposalNetwork(torch.nn.Module):
         """
         # RPN uses all feature maps that are available
         features = list(features.values())
+
+        '''卷积层head，cls, loc'''
         objectness, pred_bbox_deltas = self.head(features)
+
+        '''生成锚框'''
         anchors = self.anchor_generator(images, features)
         #TODO 待优化
         my_anchors = [each[:,1:4:2] for each in anchors]
@@ -321,6 +328,8 @@ class RegionProposalNetwork(torch.nn.Module):
         # apply pred_bbox_deltas to anchors to obtain the decoded proposals
         # note that we detach the deltas because Faster R-CNN do not backprop through
         # the proposals
+
+        '''锚框+偏移量 转换为 建议框'''
         proposals = self.box_coder.decode(pred_bbox_deltas.detach(), my_anchors)
         proposals = proposals.view(num_images, -1, 2)
 
@@ -328,7 +337,8 @@ class RegionProposalNetwork(torch.nn.Module):
         a = torch.zeros((proposals.shape[0],proposals.shape[1],1)).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
         b = torch.ones((proposals.shape[0],proposals.shape[1],1)).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
         proposals = torch.cat([a, proposals[:,:,0].unsqueeze(2), b, proposals[:,:,1].unsqueeze(2)], dim=2)
-
+        
+        '''建议框过滤'''
         boxes, scores = self.filter_proposals(proposals, objectness, images.image_sizes, num_anchors_per_level)
 
         losses = {}
