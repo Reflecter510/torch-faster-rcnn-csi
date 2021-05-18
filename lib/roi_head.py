@@ -321,13 +321,13 @@ class RoIHeads(nn.Module):
                     assert t["keypoints"].dtype == torch.float32, 'target keypoints must of float type'
 
         # 扩展上下文
-        for tmp_roi in proposals:
-            expanded = (tmp_roi[:,3]-tmp_roi[:,1])/12
-            # clip bounding box
-            tmp_roi[:, 1] = tmp_roi[:,1] - expanded
-            tmp_roi[:, 3] = tmp_roi[:,3] + expanded
-            tmp_roi[:, 1] = torch.clamp(tmp_roi[:, 1], 0, image_shapes[0][0])
-            tmp_roi[:, 3] = torch.clamp(tmp_roi[:, 3], 0, image_shapes[0][0])
+        # for tmp_roi in proposals:
+        #     expanded = (tmp_roi[:,3]-tmp_roi[:,1])/12
+        #     # clip bounding box
+        #     tmp_roi[:, 1] = tmp_roi[:,1] - expanded
+        #     tmp_roi[:, 3] = tmp_roi[:,3] + expanded
+        #     tmp_roi[:, 1] = torch.clamp(tmp_roi[:, 1], 0, image_shapes[0][0])
+        #     tmp_roi[:, 3] = torch.clamp(tmp_roi[:, 3], 0, image_shapes[0][0])
 
         if self.training:
             proposals, matched_idxs, labels, regression_targets = self.select_training_samples(proposals, targets)
