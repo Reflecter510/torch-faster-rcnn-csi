@@ -146,7 +146,7 @@ if __name__ == "__main__":
     dataset = TEMPORAL
    
     # 设置实验名
-    log_name = "16-torch-vgg"
+    log_name = "16-torch-vgg-S24"
     
     # 设置主干特征提取网络类型
     BACKBONE = "vgg"

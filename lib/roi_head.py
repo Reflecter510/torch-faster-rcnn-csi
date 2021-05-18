@@ -322,7 +322,7 @@ class RoIHeads(nn.Module):
 
         # 扩展上下文
         for tmp_roi in proposals:
-            expanded = (tmp_roi[:,3]-tmp_roi[:,1])/12
+            expanded = (tmp_roi[:,3]-tmp_roi[:,1])/24
             # clip bounding box
             tmp_roi[:, 1] = tmp_roi[:,1] - expanded
             tmp_roi[:, 3] = tmp_roi[:,3] + expanded
