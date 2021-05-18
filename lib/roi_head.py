@@ -118,7 +118,7 @@ class RoIHeads(nn.Module):
         self.keypoint_head = keypoint_head
         self.keypoint_predictor = keypoint_predictor
 
-        self.stpp = StructuredTemporalPyramidPooling(True, configs=((1,3), (1, 2,5), (1,3)))
+        self.stpp = StructuredTemporalPyramidPooling(True, configs=((1), (1, 2), (1)))
 
     def has_mask(self):
         if self.mask_roi_pool is None:
