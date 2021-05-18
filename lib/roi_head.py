@@ -342,6 +342,7 @@ class RoIHeads(nn.Module):
         #TODO 时间金字塔池化
         activity_ft, completeness_ft = self.stpp(box_features, None, [3, 3 + 10, 16])
 
+        '''预测网络'''
         box_features = self.box_head(completeness_ft)
         class_logits, box_regression = self.box_predictor(box_features)
         

@@ -14,7 +14,7 @@ import time
 os.system("rm predict/*.png")
 
 # 数据集设置
-dataset = S1P1
+dataset = TEMPORAL
 which_data = "test"
 
 '''模型断点路径'''
@@ -24,13 +24,13 @@ which_data = "test"
 # vgg
 # "D:\\Downloads\\15-torch-vgg-lr3e4Step2  TEMPORAL\\Epoch205-Total_Loss0.0148-Val_Loss0.3367.pth"
 # "D:\\Downloads\\15-torch-vgg-lr3e4Step2 S1\\Epoch155-Total_Loss0.0299-Val_Loss0.5459.pth"
-path_checkpoint =  "logs\\15-torch\\Epoch190-Total_Loss0.2849-Val_Loss0.3886.pth"#"D:\\Downloads\\Epoch280-Total_Loss0.1150-Val_Loss0.2602.pth"
+path_checkpoint =  "D:\\Downloads\\15-torch-vgg-lr3e4Step2  TEMPORAL\\Epoch205-Total_Loss0.0148-Val_Loss0.3367.pth"#"D:\\Downloads\\Epoch280-Total_Loss0.1150-Val_Loss0.2602.pth"
 
 #结果可视化
 PLOT = False    
 
 # 主干特征提取网络
-BACKBONE = "alexnet"
+BACKBONE = "vgg"
 
 #--------------------------------------------------------------------------------------------
 dataset_name = dataset.name
