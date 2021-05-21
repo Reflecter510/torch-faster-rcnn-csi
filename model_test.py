@@ -13,24 +13,20 @@ import time
        
 os.system("rm predict/*.png")
 
-# 数据集设置
-dataset = TEMPORAL
+# 数据集设置:  S1P1 或 TEMPORAL
+dataset = S1P1
 which_data = "test"
 
 '''模型断点路径'''
-# my cnn
-# temporal  logs\\15-torch-TEMPORAL\\anchor4-bs36\\Epoch250-Total_Loss0.1010-Val_Loss0.2589.pth
-# s1        logs\\15-torch\\Epoch190-Total_Loss0.2849-Val_Loss0.3886.pth
-# vgg
-# "D:\\Downloads\\15-torch-vgg-lr3e4Step2  TEMPORAL\\Epoch205-Total_Loss0.0148-Val_Loss0.3367.pth"
-# "D:\\Downloads\\15-torch-vgg-lr3e4Step2 S1\\Epoch155-Total_Loss0.0299-Val_Loss0.5459.pth"
-path_checkpoint =  "D:\\Downloads\\15-torch-vgg-lr3e4Step2  TEMPORAL\\Epoch205-Total_Loss0.0148-Val_Loss0.3367.pth"#"D:\\Downloads\\Epoch280-Total_Loss0.1150-Val_Loss0.2602.pth"
+# temporal  结果\TEMPORAL\exp0-alex\Epoch235-Total_Loss0.1064-Val_Loss0.2559.pth
+# s1p1      结果\S1P1\exp0-alex\Epoch190-Total_Loss0.2849-Val_Loss0.3886.pth
+path_checkpoint =  "结果\S1P1\exp0-alex\Epoch190-Total_Loss0.2849-Val_Loss0.3886.pth"
 
 #结果可视化
 PLOT = False    
 
 # 主干特征提取网络
-BACKBONE = "vgg"
+BACKBONE = "alexnet"
 
 #--------------------------------------------------------------------------------------------
 dataset_name = dataset.name
@@ -116,8 +112,10 @@ for (data, bbox, label) in tqdm(test_data_loader):
                 currentAxis.add_patch(rect)
                 rect=patches.Rectangle((bbox[idx][0], 2), bbox[idx][1]-bbox[idx][0] ,h-2, linewidth=2,edgecolor='r',facecolor='none')
                 currentAxis.add_patch(rect)
-                
-                plt.xlabel(which_data+str(i)+"  prd = "+actions[int(label[idx])]+"  gt = "+actions[int(labelV[idp][0])]+"  acc = "+str(conf[idx].tolist())[:5]+"  iou = "+str(max_iou)[:5]+" wd = "+str(int(bboxV[idp][1]-bboxV[idp][0])))
+                plt.ylabel("Channels")
+                plt.xlabel("predict_label= "+actions[int(label[idx])]+"  groudtruth_label = "+actions[int(labelV[idp][0])]+"  score = "+str(conf[idx].tolist())[:5])
+
+                # plt.xlabel(which_data+str(i)+"  prd = "+actions[int(label[idx])]+"  gt = "+actions[int(labelV[idp][0])]+"  acc = "+str(conf[idx].tolist())[:5]+"  iou = "+str(max_iou)[:5]+" wd = "+str(int(bboxV[idp][1]-bboxV[idp][0])))
                 plt.savefig("predict/%d.png"%(i), dpi=128)
                 plt.close()
           
