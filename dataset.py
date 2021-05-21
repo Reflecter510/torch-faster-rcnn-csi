@@ -18,5 +18,5 @@ class TEMPORAL():
     train_batch = 36
     test_batch = 278
     kaggle_dir = "../input/my"
-    actions = ['none', "1", "2", "3", "4", "5", "6"]
+    actions = ['none', "hand_up", "hand_down", "hand_left", "hand_right", "hand_circle", "hand_cross"]
 
