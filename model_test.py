@@ -18,9 +18,9 @@ dataset = S1P1
 which_data = "test"
 
 '''模型断点路径'''
-# temporal  结果\TEMPORAL\exp0-vgg\Epoch220-Total_Loss0.0155-Val_Loss0.3717.pth
-# s1p1      结果\S1P1\exp0-vgg\Epoch155-Total_Loss0.0299-Val_Loss0.5459.pth
-path_checkpoint =  "结果\S1P1\exp0-vgg\Epoch155-Total_Loss0.0299-Val_Loss0.5459.pth"
+# temporal  结果\TEMPORAL\exp1-vgg-S24\Epoch220-Total_Loss0.0143-Val_Loss0.3542.pth
+# s1p1      结果\S1P1\exp1-vgg-S24\Epoch155-Total_Loss0.0489-Val_Loss0.5103.pth
+path_checkpoint =  "结果\S1P1\exp1-vgg-S24\Epoch155-Total_Loss0.0489-Val_Loss0.5103.pth"
 
 #结果可视化
 PLOT = False    
