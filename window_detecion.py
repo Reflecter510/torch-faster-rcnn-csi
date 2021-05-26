@@ -33,7 +33,7 @@ Cuda = torch.cuda.is_available()
 
 '''
 input: CSI data with shape(batch, times_len, channels)
-output: 
+output: [{},[{"boxes","scores","labels"}]]
 '''
 def slide_window(data, bbox):
     predictions = [{},[]]
@@ -43,28 +43,33 @@ def slide_window(data, bbox):
         data[i] = (data[i]-torch.min(data[i]))/(torch.max(data[i])-torch.min(data[i]))
         # 差分
         diff_amp = torch.diff(data[i], dim=0)
-        
+        # 窗口大小
         window = 20
+        # 阈值
         threshold = torch.std(torch.abs(diff_amp))
+        
         begin = []
         s = []
         e = []
+        # 窗口滑动
         for slide in range(1, diff_amp.shape[0]-window):
             tmp_amp = torch.mean(torch.abs(diff_amp[slide:slide+window-1]))
-            if begin == [] and tmp_amp > 0.45*threshold:
+            if begin == [] and tmp_amp > threshold:
                 begin = slide
                 s.append(begin)
-            if begin != [] and tmp_amp < threshold:
+            if begin != [] and tmp_amp < 1.05*threshold:
                 over = slide
                 e.append(over)
         
         if s == [] and e == []:
             s.append(0)
             e.append(diff_amp.shape[0])
-   
-        predictions[1].append({"boxes":torch.Tensor([[0,s[0],1,e[-1]]]), "scores":torch.Tensor([0.0]), "labels":torch.Tensor([0])})
+
+        pred_box = torch.Tensor([[0,s[0],1,e[-1]]])
+        predictions[1].append({"boxes":pred_box, "scores":torch.Tensor([0.0]), "labels":torch.Tensor([0])})
         
-        if 1:
+        # 绘制CSI差分图以及动作框
+        if 0:
             segment = torch.mean(diff_amp.abs(), 1)
             plt.plot(range(0,segment.shape[0]), segment)
             plt.xlabel("Times")
