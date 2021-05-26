@@ -1,5 +1,5 @@
 import os
-from dataset import S1P1,TEMPORAL
+from dataset import S1P1, S2,TEMPORAL
 import torch
 from tqdm import tqdm
 from torch.autograd import Variable
@@ -13,7 +13,7 @@ import time
 os.system("rm predict/*.png")
 
 # 数据集设置:  S1P1 或 TEMPORAL
-dataset = TEMPORAL
+dataset = S2
 which_data = "test"
 
 #结果可视化
@@ -36,23 +36,49 @@ input: CSI data with shape(batch, times_len, channels)
 output: 
 '''
 def slide_window(data, bbox):
+    predictions = [{},[]]
     #TODO 差分  滑窗
     for i in range(0, data.shape[0]):   #batch
-        for j in range(1, data.shape[1]):    #time
-            data[i][j-1] = data[i][j]-data[i][j-1]
-        window = [0, 90]
-        segment = torch.sum(data[i].abs(), 1)
-
-        plt.plot(range(0,191), segment[:-1])
-        plt.xlabel("Times")
-        plt.ylabel("Amp_difference")
-        h = torch.max(segment[:-1])
-        currentAxis=plt.gca()
-        rect=patches.Rectangle((bboxV[i][0], 0), bboxV[i][1]-bboxV[i][0] ,h, linewidth=2,edgecolor='green',facecolor='none')
-        currentAxis.add_patch(rect)
+        # 幅值归一化
+        data[i] = (data[i]-torch.min(data[i]))/(torch.max(data[i])-torch.min(data[i]))
+        # 差分
+        diff_amp = torch.diff(data[i], dim=0)
         
-        plt.show()
-        print("")    
+        window = 20
+        threshold = torch.std(torch.abs(diff_amp))
+        begin = []
+        s = []
+        e = []
+        for slide in range(1, diff_amp.shape[0]-window):
+            tmp_amp = torch.mean(torch.abs(diff_amp[slide:slide+window-1]))
+            if begin == [] and tmp_amp > 0.45*threshold:
+                begin = slide
+                s.append(begin)
+            if begin != [] and tmp_amp < threshold:
+                over = slide
+                e.append(over)
+        
+        if s == [] and e == []:
+            s.append(0)
+            e.append(diff_amp.shape[0])
+   
+        predictions[1].append({"boxes":torch.Tensor([[0,s[0],1,e[-1]]]), "scores":torch.Tensor([0.0]), "labels":torch.Tensor([0])})
+        
+        if 1:
+            segment = torch.mean(diff_amp.abs(), 1)
+            plt.plot(range(0,segment.shape[0]), segment)
+            plt.xlabel("Times")
+            plt.ylabel("Amp_difference")
+            h = torch.max(segment[:-1])-torch.min(segment[:-1])
+            bottom = torch.min(segment[:-1])
+            currentAxis=plt.gca()
+            rect=patches.Rectangle((bboxV[i][0], bottom-0.001), bboxV[i][1]-bboxV[i][0] ,h+0.002, linewidth=2,edgecolor='green',facecolor='none')
+            currentAxis.add_patch(rect)
+            rect=patches.Rectangle((s[0], bottom), e[-1]-s[0] ,h, linewidth=2,edgecolor='red',facecolor='none')
+            currentAxis.add_patch(rect)
+            plt.show()
+    return predictions
+
 
 # 初始化结果
 np.set_printoptions(suppress=True)

@@ -7,6 +7,8 @@ slide_window=20;
   amplitude=med_time;% pca_phase=pca_phase2;
   amplitude=(amplitude-min(amplitude))/(max(amplitude)-min(amplitude));
 %  pca_phase=(pca_phase-min(pca_phase))/(max(pca_phase)-min(pca_phase));
+
+  % å·®åˆ†
   diff_amp = diff(amplitude);%diff_phase=diff(pca_phase);
   subplot(2,1,1);plot(amplitude)
 %   subplot(3,1,2);plot(pca_phase)
@@ -48,7 +50,7 @@ saveas(gcf,strcat(resultSavePath,'\',fileName,'.jpg'));
 %   hold on; plot([e e],[1,70],'g')
 %   
 %   
-%   s_final=s(basic(i,j));    % ¸ø¶¨µÚÒ»¸ö»ù×¼
+%   s_final=s(basic(i,j));    % ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½×¼
 %   for point_s=2:length(s)
 %       if s(point_s)-s_final(end)>start_bet(i,j)
 %           s_final=[s_final;s(point_s)];
