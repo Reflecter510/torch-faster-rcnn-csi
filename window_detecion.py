@@ -13,8 +13,22 @@ import time
 os.system("rm predict/*.png")
 
 # 数据集设置:  S1P1 或 TEMPORAL
-dataset = S2
+dataset = S1P1
 which_data = "test"
+
+'''
+测试集
+       IoU     逐帧检测精度 window  st  ed      
+S2     82.30   87.95       20      1   1.05   
+S1     78.65   87.41       35      1.18 1.39   
+TEMP*  64.83   80.37       35      1.18 1.39   
+
+训练集
+       IoU     逐帧检测精度 window  st  ed      
+S2     79.67   86.11       20      1   1.05   
+S1     76.73   85.71       35      1.18 1.39   
+TEMP*  64.11   79.53       35      1.18 1.39 
+'''
 
 #结果可视化
 PLOT = False    
@@ -44,7 +58,7 @@ def slide_window(data, bbox):
         # 差分
         diff_amp = torch.diff(data[i], dim=0)
         # 窗口大小
-        window = 20
+        window = 35
         # 阈值
         threshold = torch.std(torch.abs(diff_amp))
         
@@ -54,18 +68,20 @@ def slide_window(data, bbox):
         # 窗口滑动
         for slide in range(1, diff_amp.shape[0]-window):
             tmp_amp = torch.mean(torch.abs(diff_amp[slide:slide+window-1]))
-            if begin == [] and tmp_amp > threshold:
+            if begin == [] and tmp_amp > 1.18*threshold:
                 begin = slide
                 s.append(begin)
-            if begin != [] and tmp_amp < 1.05*threshold:
+            if begin != [] and tmp_amp < 1.39*threshold:
                 over = slide
                 e.append(over)
         
-        if s == [] and e == []:
-            s.append(0)
-            e.append(diff_amp.shape[0])
+        if s == [] or e == []:
+            s = [0.0]
+            e = [0.0]
 
         pred_box = torch.Tensor([[0,s[0],1,e[-1]]])
+        
+        # label 和 scores 全部设为默认值 0.0 
         predictions[1].append({"boxes":pred_box, "scores":torch.Tensor([0.0]), "labels":torch.Tensor([0])})
         
         # 绘制CSI差分图以及动作框
