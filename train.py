@@ -1,5 +1,5 @@
 from nets.model import get_model
-from dataset import S1P1, TEMPORAL
+from dataset import S1P1, S2, TEMPORAL
 from nets.unet_model import UNet
 from torch.autograd import Variable
 from trainer import FasterRCNNTrainer
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     Kaggle = True
 
     # 设置训练的数据集
-    dataset = S1P1
+    dataset = S2
    
     # 设置实验名
     log_name = "16-torch-vgg-ssn0"
