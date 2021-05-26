@@ -5,7 +5,7 @@ import torch
 from tqdm import tqdm
 from torch.autograd import Variable
 import numpy as np
-from utils.utils import detection_acc, bbox_iou
+from utils.utils import detection_acc, bbox_iou, locCls2Label, plot_confusion_matrix
 from utils import DataUtil
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -14,13 +14,13 @@ import time
 os.system("rm predict/*.png")
 
 # 数据集设置:  S1P1 或 TEMPORAL
-dataset = S1P1
+dataset = TEMPORAL
 which_data = "test"
 
 '''模型断点路径'''
 # temporal  结果\TEMPORAL\exp0-vgg\Epoch220-Total_Loss0.0155-Val_Loss0.3717.pth
 # s1p1      结果\S1P1\exp0-vgg\Epoch155-Total_Loss0.0299-Val_Loss0.5459.pth
-path_checkpoint =  "结果\S1P1\exp0-vgg\Epoch155-Total_Loss0.0299-Val_Loss0.5459.pth"
+path_checkpoint =  "结果\TEMPORAL\exp0-vgg\Epoch220-Total_Loss0.0155-Val_Loss0.3717.pth"
 
 #结果可视化
 PLOT = False    
@@ -65,6 +65,9 @@ cnt = 0
 i = 0
 _time = 0.0
 
+pred_labels = []
+gt_labels = []
+
 for (data, bbox, label) in tqdm(test_data_loader):
     with torch.no_grad():
         data = data.reshape([-1,IMAGE_SHAPE[0], IMAGE_SHAPE[1]])
@@ -98,6 +101,9 @@ for (data, bbox, label) in tqdm(test_data_loader):
             dete_acc = detection_acc(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV[idp].view(1,2)))[0][0]
             final_acc = detection_acc(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV[idp].view(1,2)), ACC=int(label[idx])==int(labelV[idp][0]))[0][0]
 
+            pred_labels.extend(locCls2Label(bboxV[idp].view(-1,2), labelV[idp][0].view(-1,1))[0])
+            gt_labels.extend(locCls2Label(bbox[idx].view(-1,2).cpu(), label[idx].view(-1,1))[0])
+
             if PLOT:
                 X=np.linspace(0,192,192,endpoint=True)
                 plt.contourf(dataV[idp].cpu())
@@ -128,6 +134,17 @@ for (data, bbox, label) in tqdm(test_data_loader):
             final_all += final_acc
 
             cnt+=1
+
+from sklearn.metrics import confusion_matrix
+matrix = confusion_matrix(gt_labels, pred_labels)
+matrix = matrix.astype('float') / matrix.sum(axis=1)[:, np.newaxis]
+plot_confusion_matrix(matrix, dataset.actions,'confusion_matrix.png', title='Sample-level Action Classification Confusion Matrix')
+
+gt_labels = [1.0 if each>=1.0 else 0.0 for each in gt_labels]
+pred_labels = [1.0 if each>=1.0 else 0.0 for each in pred_labels]
+matrix = confusion_matrix(gt_labels, pred_labels)
+matrix = matrix.astype('float') / matrix.sum(axis=1)[:, np.newaxis]
+plot_confusion_matrix(matrix, ["non","yes"],'detection_confusion_matrix.png', title='Sample-level Action Detection Confusion Matrix')
 
 ious_all /= i
 detection_all /= i

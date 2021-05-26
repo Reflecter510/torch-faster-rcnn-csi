@@ -12,3 +12,4 @@ logs
 logs_map
 venv
 结果
+*.png

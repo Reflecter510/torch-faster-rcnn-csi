@@ -35,3 +35,58 @@ def detection_acc(bbox_a, bbox_b, ACC=True):
     else:
         return 1.0 - (area_a[:, None] + area_b - area_i) / 192.0
 
+# 动作框与分类 转换为 逐帧预测的分类结果
+def locCls2Label(location, data_class):
+    labels = []
+    for i in range(0, location.shape[0]):
+        st = int(location[i][0])
+        ed = int(location[i][1])
+        head = torch.zeros(st)
+        action_label = torch.zeros(ed-st)
+        action_label[:] = data_class[i]
+        tail = torch.zeros(192-ed)
+        label = torch.cat([head, action_label, tail])
+        labels.append(label.view(1,-1))
+    return torch.cat(labels).tolist()
+
+
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import numpy as np
+
+def plot_confusion_matrix(cm, classes, savename, title='Confusion Matrix'):
+
+    plt.figure(figsize=(12, 8), dpi=100)
+    np.set_printoptions(precision=2)
+
+    # 在混淆矩阵中每格的概率值
+    ind_array = np.arange(len(classes))
+    x, y = np.meshgrid(ind_array, ind_array)
+    for x_val, y_val in zip(x.flatten(), y.flatten()):
+        c = cm[y_val][x_val]
+        if c > 0.001:
+            plt.text(x_val, y_val, "%d%%" % (int(c*100),), color='red', fontsize=15, va='center', ha='center')
+        else:
+            plt.text(x_val, y_val, "%d%%" % (int(c*100),), color='red', fontsize=15, va='center', ha='center')
+
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.binary)
+    plt.title(title)
+    plt.colorbar()
+    xlocations = np.array(range(len(classes)))
+    plt.xticks(xlocations, classes, rotation=90)
+    plt.yticks(xlocations, classes)
+    plt.ylabel('Actual label')
+    plt.xlabel('Predict label')
+    
+    # offset the tick
+    tick_marks = np.array(range(len(classes))) + 0.5
+    plt.gca().set_xticks(tick_marks, minor=True)
+    plt.gca().set_yticks(tick_marks, minor=True)
+    plt.gca().xaxis.set_ticks_position('none')
+    plt.gca().yaxis.set_ticks_position('none')
+    plt.grid(True, which='minor', linestyle='-')
+    plt.gcf().subplots_adjust(bottom=0.15)
+    
+    # show confusion matrix
+    plt.savefig(savename, format='png')
+    plt.show()
