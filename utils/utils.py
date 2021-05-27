@@ -56,7 +56,7 @@ import numpy as np
 
 def plot_confusion_matrix(cm, classes, savename, title='Confusion Matrix'):
 
-    plt.figure(figsize=(12, 8), dpi=100)
+    plt.figure(figsize=(12, 8), dpi=250)
     np.set_printoptions(precision=2)
 
     # 在混淆矩阵中每格的概率值
@@ -64,16 +64,24 @@ def plot_confusion_matrix(cm, classes, savename, title='Confusion Matrix'):
     x, y = np.meshgrid(ind_array, ind_array)
     for x_val, y_val in zip(x.flatten(), y.flatten()):
         c = cm[y_val][x_val]
-        if c > 0.001:
-            plt.text(x_val, y_val, "%d%%" % (int(c*100),), color='red', fontsize=15, va='center', ha='center')
+        if x_val == y_val:
+            color = "white"
         else:
-            plt.text(x_val, y_val, "%d%%" % (int(c*100),), color='red', fontsize=15, va='center', ha='center')
+            color = "black"
+        if len(classes) < 7:
+            fontsize=18
+        else:
+            fontsize=9
+        if c > 0.001:
+            plt.text(x_val, y_val, "%0.1f%%" % ((c*100),), color=color, fontsize=fontsize, va='center', ha='center')
+        else:
+            plt.text(x_val, y_val, "%0.1f%%" % ((c*100),), color=color, fontsize=fontsize, va='center', ha='center')
 
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.binary)
     plt.title(title)
     plt.colorbar()
     xlocations = np.array(range(len(classes)))
-    plt.xticks(xlocations, classes, rotation=90)
+    plt.xticks(xlocations, classes, rotation=45)
     plt.yticks(xlocations, classes)
     plt.ylabel('Actual label')
     plt.xlabel('Predict label')
