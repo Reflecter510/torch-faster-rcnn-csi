@@ -146,7 +146,7 @@ if __name__ == "__main__":
     dataset = S2
    
     # 设置实验名
-    log_name = "16-torch-vgg-ssn1_12_1"
+    log_name = "16-torch-vgg-ssn13_1210_13"
     
     # 设置主干特征提取网络类型
     BACKBONE = "vgg"
