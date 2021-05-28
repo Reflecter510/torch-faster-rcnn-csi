@@ -1,6 +1,6 @@
 import os
 from nets.model import get_model
-from dataset import S1P1, TEMPORAL
+from dataset import S1P1, S2, TEMPORAL
 import torch
 from tqdm import tqdm
 from torch.autograd import Variable
@@ -14,13 +14,14 @@ import time
 os.system("rm predict/*.png")
 
 # 数据集设置:  S1P1 或 TEMPORAL
-dataset = TEMPORAL
+dataset = S2
 which_data = "test"
 
 '''模型断点路径'''
 # temporal  结果\TEMPORAL\exp0-vgg\Epoch220-Total_Loss0.0155-Val_Loss0.3717.pth
 # s1p1      结果\S1P1\exp0-vgg\Epoch155-Total_Loss0.0299-Val_Loss0.5459.pth
-path_checkpoint =  "结果\TEMPORAL\exp0-vgg\Epoch220-Total_Loss0.0155-Val_Loss0.3717.pth"
+# s2        "结果\S2\exp0-vgg\Epoch260-Total_Loss0.0152-Val_Loss0.5530.pth"
+path_checkpoint =  "结果\S2\exp0-vgg\Epoch260-Total_Loss0.0152-Val_Loss0.5530.pth"
 
 #结果可视化
 PLOT = False    
