@@ -20,8 +20,8 @@ which_data = "test"
 '''模型断点路径'''
 # temporal  结果\TEMPORAL\exp0-vgg\Epoch220-Total_Loss0.0155-Val_Loss0.3717.pth
 # s1p1      结果\S1P1\exp0-vgg\Epoch155-Total_Loss0.0299-Val_Loss0.5459.pth
-# s2        "结果\S2\exp0-vgg\Epoch260-Total_Loss0.0152-Val_Loss0.5530.pth"
-path_checkpoint =  "结果\S2\exp0-vgg\Epoch260-Total_Loss0.0152-Val_Loss0.5530.pth"
+# s2        结果\S2\exp0-vgg\\bs48\Epoch250-Total_Loss0.0382-Val_Loss0.4578.pth                               "结果\S2\exp0-vgg\Epoch260-Total_Loss0.0152-Val_Loss0.5530.pth"
+path_checkpoint =  "结果\S2\exp0-vgg\\bs48\Epoch250-Total_Loss0.0382-Val_Loss0.4578.pth"
 
 #结果可视化
 PLOT = False    
