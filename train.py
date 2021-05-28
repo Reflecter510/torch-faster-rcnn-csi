@@ -143,7 +143,7 @@ if __name__ == "__main__":
     Kaggle = True
 
     # 设置训练的数据集
-    dataset = S2
+    dataset = S1
    
     # 设置实验名
     log_name = "16-torch-vgg-ssn13_1210_13"
