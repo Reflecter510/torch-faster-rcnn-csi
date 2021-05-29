@@ -97,4 +97,4 @@ def plot_confusion_matrix(cm, classes, savename, title='Confusion Matrix'):
     
     # show confusion matrix
     plt.savefig(savename, format='png')
-    plt.show()
+    #plt.show()
