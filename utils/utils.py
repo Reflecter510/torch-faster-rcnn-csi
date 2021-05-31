@@ -98,3 +98,26 @@ def plot_confusion_matrix(cm, classes, savename, title='Confusion Matrix'):
     # show confusion matrix
     plt.savefig(savename, format='png')
     #plt.show()
+    plt.close()
+
+def draw_bar(labels,quants, methods, title):
+    # 这两行代码解决 plt 中文显示的问题
+    plt.rcParams['font.sans-serif'] = ['SimHei']
+    plt.rcParams['axes.unicode_minus'] = False
+    plt.ylim((min(1.0, np.min(quants)-0.04), np.max(quants)+0.01))
+    
+    bar_width = 0.2 # 条形宽度
+    index_0 = np.arange(len(labels)) # 第一个条形图的横坐标
+    index = index_0
+    colors = ["royalblue", "darkorange" , "slategrey", "gold", "red"]
+    # 使用两次 bar 函数画出两组条形图
+    for i in range(0,quants.shape[0]):
+        index = index_0 if i==0 else index+bar_width
+        plt.bar(index, height=quants[i], width=bar_width, color=colors[i], label=methods[i])
+    
+    plt.legend() # 显示图例
+    plt.xticks(index_0 + bar_width/2, labels) # 让横坐标轴刻度显示 waters 里的饮用水， index_male + bar_width/2 为横坐标轴刻度的位置
+    plt.ylabel('') # 纵坐标轴标题
+    plt.title(title) # 图形标题
+    
+    plt.show()
