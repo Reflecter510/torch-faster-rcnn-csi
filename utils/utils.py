@@ -121,3 +121,26 @@ def draw_bar(labels,quants, methods, title):
     plt.title(title) # 图形标题
     
     plt.show()
+
+def draw_table(data):
+    plt.rcParams['font.sans-serif'] = ['SimHei']
+    plt.rcParams['axes.unicode_minus'] = False
+    table = plt.table(cellText=data, colLabels=['逐帧分类精度', '逐帧检测精度', '逐帧分类精度', '逐帧检测精度','逐帧分类精度','逐帧检测精度'], loc='center', 
+                cellLoc='center',)# colColours=['#FFFFFF', '#F3CC32', '#2769BD', '#DC3735'])
+    table.auto_set_font_size(False)
+    h = table.get_celld()[(0,0)].get_height()
+    w = table.get_celld()[(0,0)].get_width()
+    header = [table.add_cell(-1,pos, w, h, loc="center", facecolor="none") for pos in [0,1,2,3,4,5]]
+    header[0].visible_edges = "TBL"
+    header[1].visible_edges = "TBR"
+    header[2].visible_edges = "TBL"
+    header[3].visible_edges = "TBR"
+    header[4].visible_edges = "TBL"
+    header[5].visible_edges = "TBR"
+    header[0].get_text().set_text("S1")
+    header[2].get_text().set_text("S2")
+    header[4].get_text().set_text("TEMPORAL")
+
+    plt.axis('off')
+    plt.show()
+    plt.close()

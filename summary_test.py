@@ -4,11 +4,12 @@ import torch
 from tqdm import tqdm
 from torch.autograd import Variable
 import numpy as np
-from utils.utils import detection_acc, bbox_iou, draw_bar, locCls2Label, plot_confusion_matrix
+from utils.utils import detection_acc, bbox_iou, draw_bar, draw_table, locCls2Label, plot_confusion_matrix
 from utils import DataUtil
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import time
+np.set_printoptions(4)
 # 清除动作实例图       
 os.system("rm predict/*.png")
 
@@ -18,10 +19,17 @@ which_data = "test"
 dataset_names = ["S1", "S2", "TEMPORAL"]
 datasets = [S1P1, S2, TEMPORAL]
 
-exps_index = [2*3-1, 6*3-1, 10*3-1]
+exps_index = [2*3-1, 6*3-1, 10*3-1, 12*3-1]
 exps = ['exp0-alex', 'exp0-vgg', 
         'exp1-vgg-S0', 'exp1-vgg-S6',  'exp0-vgg', 'exp1-vgg-S24', 
-        'exp2-vgg-ssn0', 'exp2-vgg-ssn1_12_1', 'exp0-vgg', 'exp2-vgg-ssn13_1210_13']
+        'exp2-vgg-ssn0', 'exp2-vgg-ssn1_12_1', 'exp0-vgg', 'exp2-vgg-ssn13_1210_13',
+        'exp0-vgg', 'exp0-vgg']
+methods = [
+    ["AlexNet", "VGG"],
+    ["不扩展", "s/6", "s/12", "s/24"],
+    ["无", "(1)(1,2)(1)", "(1,3)(1,2,5)(1,3)", "(1,3)(1,2,10)(1,3)"],
+    ["原始", "噪声增强"]
+]
 
 pkl_files = []
 for exp in exps:
@@ -56,6 +64,9 @@ for each in pkl_files:
     IMAGE_SHAPE = dataset.image_shape
     actions = dataset.actions
 
+    if _index == exps_index[-1]-2:
+        #print("test test noise!")
+        DataUtil.noise = True
     #加载测试集
     num_test_instances, test_data_loader = DataUtil.get_data_loader(dataset_name, which_data, batch_size=test_bacth, shuffle = False)
 
@@ -184,21 +195,19 @@ for each in pkl_files:
         raw_1 = []
         raw_2 = []
 
-    if _index==exps_index[0] or _index==exps_index[1] or _index==exps_index[2]:
-        for each in exp_result:
-            print(each[:6])
-        if _index==exps_index[0]:
-            methods = ["VGG", "AlexNet"]
-        if _index==exps_index[1]:
-            methods = ["不扩展", "s/6", "s/12", "s/24"]
-        if _index==exps_index[2]:
-            methods = ["无", "(1)(1,2)(1)", "(1,3)(1,2,5)(1,3)", "(1,3)(1,2,10)(1,3)"]
-        accuracy = torch.Tensor(exp_result)[:,6::2]#.T.flatten()
-        iou= torch.Tensor(exp_result)[:,7::2]#.T.flatten()
-        draw_bar(["S1","S2","TEMPORAL"],accuracy.numpy(), methods, "分类准确度")
-        draw_bar(["S1","S2","TEMPORAL"],iou.numpy(), methods, "IoU")
+    for k in range(0, len(exps_index)):
+        if _index==exps_index[k]:
+            for each in exp_result:
+                print(each[:6])
 
-        all_results.append(exp_result)
-        exp_result = []
+            accuracy = torch.Tensor(exp_result)[:,6::2]#.T.flatten()
+            iou= torch.Tensor(exp_result)[:,7::2]#.T.flatten()
+            draw_bar(["S1","S2","TEMPORAL"],accuracy.numpy(), methods[k], "分类准确度")
+            draw_bar(["S1","S2","TEMPORAL"],iou.numpy(), methods[k], "IoU")
+
+            draw_table(torch.Tensor(exp_result)[:,:6].tolist())
+
+            all_results.append(exp_result)
+            exp_result = []
 
     _index += 1
