@@ -111,8 +111,8 @@ for each in pkl_files:
                 predictions = model(dataV.permute(0,2,1))
             elif each[0][-8:] == "unet.pkl":
                 # Unet
-                unet_result = model(dataV).data.max(1)[1]
-                predictions = label2LocCls(unet_result)
+                unet_result.append(model(dataV).data.max(1)[1])
+                predictions = label2LocCls(unet_result[-1])
             else:
                 # 本文模型
                 predictions = model(dataV.unsqueeze(3))
@@ -193,6 +193,7 @@ for each in pkl_files:
 
     # unet的逐帧分类精度直接计算，因为unet结果转换为动作框后的逐帧类别有误差
     if unet_result != []:
+        unet_result = torch.cat(unet_result, dim=0)
         final_all = unet_result.eq(torch.Tensor(gt_labels).view(-1,192)).sum()/ (num_test_instances * 192)
     # 滑动窗口方法的结果没有逐帧分类精度
     elif each[0][-8:] == "null.pkl":
