@@ -56,7 +56,7 @@ import numpy as np
 
 def plot_confusion_matrix(cm, classes, savename, title='Confusion Matrix'):
 
-    plt.figure(figsize=(12, 8), dpi=250)
+    plt.figure(figsize=(12, 8), dpi=100)
     np.set_printoptions(precision=2)
 
     # 在混淆矩阵中每格的概率值
@@ -97,7 +97,7 @@ def plot_confusion_matrix(cm, classes, savename, title='Confusion Matrix'):
     
     # show confusion matrix
     plt.savefig(savename, format='png')
-    #plt.show()
+    plt.show()
     plt.close()
 
 def draw_bar(labels,quants, methods, title):
@@ -122,7 +122,8 @@ def draw_bar(labels,quants, methods, title):
     
     plt.show()
 
-def draw_table(data):
+# input: ndarrray
+def draw_table(data, methods):
     plt.rcParams['font.sans-serif'] = ['SimHei']
     plt.rcParams['axes.unicode_minus'] = False
     table = plt.table(cellText=data, colLabels=['逐帧分类精度', '逐帧检测精度', '逐帧分类精度', '逐帧检测精度','逐帧分类精度','逐帧检测精度'], loc='center', 
@@ -140,6 +141,11 @@ def draw_table(data):
     header[0].get_text().set_text("S1")
     header[2].get_text().set_text("S2")
     header[4].get_text().set_text("TEMPORAL")
+
+    header = [table.add_cell(pos,-1, w, h, loc="center", facecolor="none") for pos in range(-1, len(methods)+1)]
+    header[0].get_text().set_text("测试集")
+    for i in range(2, len(methods)+2):
+        header[i].get_text().set_text(methods[i-2])
 
     plt.axis('off')
     plt.show()

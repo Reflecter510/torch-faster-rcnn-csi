@@ -1,7 +1,6 @@
 import os
 from dataset import S1P1, S2, TEMPORAL
 import torch
-from tqdm import tqdm
 from torch.autograd import Variable
 import numpy as np
 from utils.utils import detection_acc, bbox_iou, draw_bar, draw_table, locCls2Label, plot_confusion_matrix
@@ -31,6 +30,7 @@ methods = [
     ["原始", "噪声增强"]
 ]
 
+# 获取pkl文件列表
 pkl_files = []
 for exp in exps:
     for i in range(0, len(dataset_names)):
@@ -40,8 +40,9 @@ for exp in exps:
             if each[-3:] == "pkl":
                 pkl_files.append([dir+"/"+each,i])
 
-#结果可视化
-PLOT = False    
+# 结果可视化
+PLOT = False 
+# 是否为每一个结果生成混淆矩阵  
 gen_matrix = False
 
 #------------------------------  模型  ----------------------------------------#
@@ -124,7 +125,7 @@ for each in pkl_files:
                 dete_acc = detection_acc(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV[idp].view(1,2)))[0][0]
                 final_acc = detection_acc(np.asarray(bbox[idx].view(1,2).cpu()), np.asarray(bboxV[idp].view(1,2)), ACC=int(label[idx])==int(labelV[idp][0]))[0][0]
 
-                if gen_matrix:
+                if gen_matrix or (_index>2 and _index<6):
                     # 动作框转换为逐帧预测的标签
                     pred_labels.extend(locCls2Label(bboxV[idp].view(-1,2), labelV[idp][0].view(-1,1))[0])
                     gt_labels.extend(locCls2Label(bbox[idx].view(-1,2).cpu(), label[idx].view(-1,1))[0])
@@ -148,7 +149,7 @@ for each in pkl_files:
                     plt.xlabel("predict_label= "+actions[int(label[idx])]+"  groudtruth_label = "+actions[int(labelV[idp][0])]+"  score = "+str(conf[idx].tolist())[:5])
 
                     # plt.xlabel(which_data+str(i)+"  prd = "+actions[int(label[idx])]+"  gt = "+actions[int(labelV[idp][0])]+"  acc = "+str(conf[idx].tolist())[:5]+"  iou = "+str(max_iou)[:5]+" wd = "+str(int(bboxV[idp][1]-bboxV[idp][0])))
-                    plt.savefig("predict/%d.png"%(i), dpi=128)
+                    plt.savefig("predict/%d.png"%(i), dpi=98)
                     plt.close()
               
                 # 统计结果
@@ -160,7 +161,7 @@ for each in pkl_files:
 
                 cnt+=1
 
-    if gen_matrix:
+    if gen_matrix or(_index>2 and _index<6):
         # 绘制分类混淆矩阵
         from sklearn.metrics import confusion_matrix
         matrix = confusion_matrix(gt_labels, pred_labels)
@@ -179,33 +180,37 @@ for each in pkl_files:
     final_all /= num_test_instances
     acc /= num_test_instances
     _time /= num_test_instances
+
+    # 打印pkl文件名
     print(each[0])
     # print("有效预测：",cnt)
     # print("分类准确度：", str(acc)[:6], "  IOU: ",str(ious_all)[:6])
     # print("检测分类精度: ",str(final_all)[:6], " 检测精度: ",str(detection_all)[:6])
     # print("平均每份预测时间：", str(_time)[:6],"秒")
 
+    # 保存所有结果到一个行向量
     raw_1.append(final_all)
     raw_1.append(detection_all)
     raw_2.append(acc)
     raw_2.append(ious_all)
 
+    # 每三个数据集的结果作为一行
     if (_index+1) % 3 == 0:
         exp_result.append(raw_1 + raw_2)
         raw_1 = []
         raw_2 = []
 
+    # 绘图
     for k in range(0, len(exps_index)):
         if _index==exps_index[k]:
-            for each in exp_result:
-                print(each[:6])
-
+            # 绘制分类准确度和IoU的柱状图
             accuracy = torch.Tensor(exp_result)[:,6::2]#.T.flatten()
             iou= torch.Tensor(exp_result)[:,7::2]#.T.flatten()
             draw_bar(["S1","S2","TEMPORAL"],accuracy.numpy(), methods[k], "分类准确度")
             draw_bar(["S1","S2","TEMPORAL"],iou.numpy(), methods[k], "IoU")
 
-            draw_table(torch.Tensor(exp_result)[:,:6].tolist())
+            # 绘制逐帧指标的表格，结果保留两位小数
+            draw_table((torch.Tensor(exp_result)[:,:6]*10000).int().numpy()/100.0, methods[k])
 
             all_results.append(exp_result)
             exp_result = []

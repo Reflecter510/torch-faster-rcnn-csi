@@ -230,7 +230,7 @@ if __name__ == "__main__":
 
     writer.close()
 
-
+    # 下面的代码根据训练保存的模型文件进行测试
     from utils.utils import bbox_iou, detection_acc
     import os
     import re
