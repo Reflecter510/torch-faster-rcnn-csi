@@ -145,7 +145,6 @@ for each in pkl_files:
                     # 动作框转换为逐帧预测的标签
                     pred_labels.extend(locCls2Label(pred_tensor, label[idx].view(-1,1))[0])
                 gt_labels.extend(locCls2Label(gt_tensor, labelV[idp][0].view(-1,1))[0])
-                
 
                 # 绘制动作实例图
                 if PLOT:
@@ -177,15 +176,13 @@ for each in pkl_files:
     if gen_matrix or(_index>11 and _index<15):
         # 绘制分类混淆矩阵
         from sklearn.metrics import confusion_matrix
-        matrix = confusion_matrix(gt_labels, pred_labels)
-        matrix = matrix.astype('float') / matrix.sum(axis=1)[:, np.newaxis]
+        matrix = confusion_matrix(gt_labels, pred_labels, normalize='true')
         plot_confusion_matrix(matrix, dataset.actions,'confusion_matrix.png', title='Sample-level Action Classification Confusion Matrix')
 
         # 绘制检测混淆矩阵
         gt_labels = [1.0 if each>=1.0 else 0.0 for each in gt_labels]
         pred_labels = [1.0 if each>=1.0 else 0.0 for each in pred_labels]
-        matrix = confusion_matrix(gt_labels, pred_labels)
-        matrix = matrix.astype('float') / matrix.sum(axis=1)[:, np.newaxis]
+        matrix = confusion_matrix(gt_labels, pred_labels, normalize='true')
         plot_confusion_matrix(matrix, ["non","yes"],'detection_confusion_matrix.png', title='Sample-level Action Detection Confusion Matrix')
 
     # 计算平均结果

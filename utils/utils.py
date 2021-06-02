@@ -70,7 +70,7 @@ import numpy as np
 
 def plot_confusion_matrix(cm, classes, savename, title='Confusion Matrix'):
 
-    plt.figure(figsize=(12, 8), dpi=100)
+    plt.figure(figsize=(12, 8), dpi=115)
     np.set_printoptions(precision=2)
 
     # 在混淆矩阵中每格的概率值
@@ -83,22 +83,21 @@ def plot_confusion_matrix(cm, classes, savename, title='Confusion Matrix'):
         else:
             color = "black"
         if len(classes) < 7:
-            fontsize=18
+            fontsize=24
         else:
-            fontsize=9
-        if c > 0.001:
-            plt.text(x_val, y_val, "%0.1f%%" % ((c*100),), color=color, fontsize=fontsize, va='center', ha='center')
-        else:
-            plt.text(x_val, y_val, "%0.1f%%" % ((c*100),), color=color, fontsize=fontsize, va='center', ha='center')
+            fontsize=12
+ 
+        plt.text(x_val, y_val, "%0.1f%%" % ((c*100),), color=color, fontsize=fontsize, va='center', ha='center')
+
 
     plt.imshow(cm, interpolation='nearest', cmap=plt.cm.binary)
     plt.title(title)
     plt.colorbar()
     xlocations = np.array(range(len(classes)))
-    plt.xticks(xlocations, classes, rotation=45)
-    plt.yticks(xlocations, classes)
-    plt.ylabel('Actual label')
-    plt.xlabel('Predict label')
+    plt.xticks(xlocations, classes, rotation=45,fontsize=fontsize)
+    plt.yticks(xlocations, classes,fontsize=fontsize)
+    plt.ylabel('Actual label',fontsize=fontsize)
+    plt.xlabel('Predict label',fontsize=fontsize)
     
     # offset the tick
     tick_marks = np.array(range(len(classes))) + 0.5
@@ -118,7 +117,10 @@ def draw_bar(labels,quants, methods, title):
     # 这两行代码解决 plt 中文显示的问题
     plt.rcParams['font.sans-serif'] = ['SimHei']
     plt.rcParams['axes.unicode_minus'] = False
-    plt.ylim((min(1.0, np.min(quants)-0.04), np.max(quants)+0.01))
+    if methods[0] == "滑动窗口" and title=="分类准确度":
+        plt.ylim((min(1.0, np.min(quants[1:])-0.04), np.max(quants)+0.01))
+    else:
+        plt.ylim((min(1.0, np.min(quants)-0.04), np.max(quants)+0.01))
     
     bar_width = 0.2 # 条形宽度
     index_0 = np.arange(len(labels)) # 第一个条形图的横坐标
@@ -127,6 +129,8 @@ def draw_bar(labels,quants, methods, title):
     # 使用两次 bar 函数画出两组条形图
     for i in range(0,quants.shape[0]):
         index = index_0 if i==0 else index+bar_width
+        if methods[i] == "滑动窗口" and title=="分类准确度":
+            continue
         plt.bar(index, height=quants[i], width=bar_width, color=colors[i], label=methods[i])
     
     plt.legend() # 显示图例
