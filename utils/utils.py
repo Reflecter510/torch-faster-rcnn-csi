@@ -49,6 +49,20 @@ def locCls2Label(location, data_class):
         labels.append(label.view(1,-1))
     return torch.cat(labels).tolist()
 
+# 逐帧预测的分类结果 转换为 动作框与分类
+def label2LocCls(prediction):
+    predictions = [{},[]]
+    # 逐帧结果转换为动作框计算IoU和分类准确度
+    for j in range(0, prediction.shape[0]):
+        pred_index = prediction[j].nonzero()
+        if pred_index.shape[0] == 0:
+            continue
+        pred_box = torch.Tensor([[pred_index[0], pred_index[-1]]])
+        pred_action = prediction[j][int(pred_box.mean())]
+
+        predictions[1].append({"boxes":torch.Tensor([[0,pred_box[0][0],1,pred_box[0][1]]]), "scores":torch.Tensor([0.0]), "labels":pred_action.view(1,1)})
+    return predictions
+
 
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
@@ -150,3 +164,55 @@ def draw_table(data, methods):
     plt.axis('off')
     plt.show()
     plt.close()
+
+# 基于阈值的滑动窗口
+def slide_window(data):
+    predictions = [{},[]]
+    #TODO 差分  滑窗
+    for i in range(0, data.shape[0]):   #batch
+        # 幅值归一化
+        data[i] = (data[i]-torch.min(data[i]))/(torch.max(data[i])-torch.min(data[i]))
+        # 差分
+        diff_amp = torch.diff(data[i], dim=0)
+        # 窗口大小
+        window = 35
+        # 阈值
+        threshold = torch.std(torch.abs(diff_amp))
+        
+        begin = []
+        s = []
+        e = []
+        # 窗口滑动
+        for slide in range(1, diff_amp.shape[0]-window):
+            tmp_amp = torch.mean(torch.abs(diff_amp[slide:slide+window-1]))
+            if begin == [] and tmp_amp > 1.18*threshold:
+                begin = slide
+                s.append(begin)
+            if begin != [] and tmp_amp < 1.39*threshold:
+                over = slide
+                e.append(over)
+        
+        if s == [] or e == []:
+            s = [0.0]
+            e = [0.0]
+
+        pred_box = torch.Tensor([[0,s[0],1,e[-1]]])
+        
+        # label 和 scores 全部设为默认值 0.0 
+        predictions[1].append({"boxes":pred_box, "scores":torch.Tensor([0.0]), "labels":torch.Tensor([0])})
+        
+        # 绘制CSI差分图以及动作框
+        # if 0:
+        #     segment = torch.mean(diff_amp.abs(), 1)
+        #     plt.plot(range(0,segment.shape[0]), segment)
+        #     plt.xlabel("Times")
+        #     plt.ylabel("Amp_difference")
+        #     h = torch.max(segment[:-1])-torch.min(segment[:-1])
+        #     bottom = torch.min(segment[:-1])
+        #     currentAxis=plt.gca()
+        #     rect=patches.Rectangle((bboxV[i][0], bottom-0.001), bboxV[i][1]-bboxV[i][0] ,h+0.002, linewidth=2,edgecolor='green',facecolor='none')
+        #     currentAxis.add_patch(rect)
+        #     rect=patches.Rectangle((s[0], bottom), e[-1]-s[0] ,h, linewidth=2,edgecolor='red',facecolor='none')
+        #     currentAxis.add_patch(rect)
+        #     plt.show()
+    return predictions
