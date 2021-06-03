@@ -3,10 +3,8 @@ from dataset import S1P1, S2, TEMPORAL
 import torch
 from torch.autograd import Variable
 import numpy as np
-from utils.utils import detection_acc, bbox_iou, draw_bar, draw_table, label2LocCls, locCls2Label, plot_confusion_matrix, slide_window
+from utils.utils import detection_acc, bbox_iou, draw_bar, draw_table, label2LocCls, locCls2Label, plot_confusion_matrix, plot_csi_box_actions, slide_window
 from utils import DataUtil
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 np.set_printoptions(4)
 # 清除动作实例图       
 os.system("rm predict/*.png")
@@ -43,7 +41,7 @@ for exp in exps:
                 pkl_files.append([dir+"/"+each,i])
 
 # 结果可视化
-PLOT = False 
+PLOT = True 
 # 是否为每一个结果生成混淆矩阵  
 gen_matrix = False
 
@@ -61,8 +59,9 @@ raw_2 = []
 
 # pkl模型文件列表的下标
 _index = 0
+
 for each in pkl_files:
-    # 根据数据集初始化相关变量
+    # 根据指定数据集初始化相关变量
     dataset = datasets[each[1]]
     dataset_name = dataset.name
     test_bacth = dataset.test_batch
@@ -81,28 +80,39 @@ for each in pkl_files:
         # 滑动窗口方法不需要加载模型，直接调用函数slide_window
         model = slide_window
     else:
+        # 加载pkl文件
         model = torch.load(each[0], map_location=device)
         # 测试模式
         model = model.eval()
 
     # 初始化单个模型的准确度
     np.set_printoptions(suppress=True)
+    # IoU
     ious_all = 0
+    # 逐帧检测精度
     detection_all = 0.0
-    final_all = 0.0
-    acc = 0.0
+    # 逐帧分类精度
+    class_acc_all = 0.0
+    # 动作分类准确度
+    accuracy = 0.0
+
     # 逐帧的预测结果
     unet_result = []
     pred_labels = []
     gt_labels = []
+
+    # CSI序列数
     i = 0
 
     # 取出一批数据
     for (data, bbox, label) in test_data_loader:
         with torch.no_grad():
             data = data.reshape([-1,IMAGE_SHAPE[0], IMAGE_SHAPE[1]])
+            # CSI序列
             dataV = Variable(data.to(device))
+            # 真实动作框
             bboxV = Variable(bbox.to(device))
+            # 真实动作标签
             labelV = Variable(label.to(device))
 
             # 批量预测
@@ -112,6 +122,7 @@ for each in pkl_files:
             elif each[0][-8:] == "unet.pkl":
                 # Unet
                 unet_result.append(model(dataV).data.max(1)[1])
+                # 逐帧预测结果转换为动作框
                 predictions = label2LocCls(unet_result[-1])
             else:
                 # 本文模型
@@ -126,59 +137,45 @@ for each in pkl_files:
                     continue
                 
                 # 预测框
-                bbox = prediction["boxes"][:,1:4:2].view(-1,2)
-                conf = prediction["scores"]
-                label = prediction["labels"]
-                idx = 0
-                pred_tensor = bbox[idx].view(1,2)
+                bbox, conf, label = prediction["boxes"][:,1:4:2].view(-1,2)[0], prediction["scores"][0], prediction["labels"][0]
+                pred_box = bbox.view(1,2)
+                pred_action = int(label)
                 # 真实框
-                gt_tensor = bboxV[idp].view(1,2)
+                gt_box = bboxV[idp].view(1,2)
+                gt_action = int(labelV[idp][0])
                 # 动作类别是否预测正确
-                ACC = int(label[idx])==int(labelV[idp][0])
+                ACC = pred_action==gt_action
 
                 # 计算 IoU、逐帧检测精度、逐帧分类精度
-                max_iou = bbox_iou(pred_tensor.numpy(), gt_tensor.numpy())[0][0]
-                dete_acc = detection_acc(pred_tensor.numpy(), gt_tensor.numpy())[0][0]
-                final_acc = detection_acc(pred_tensor.numpy(), gt_tensor.numpy(), ACC=ACC)[0][0]
+                max_iou = bbox_iou(pred_box.numpy(), gt_box.numpy())[0][0]
+                dete_acc = detection_acc(pred_box.numpy(), gt_box.numpy())[0][0]
+                class_acc = detection_acc(pred_box.numpy(), gt_box.numpy(), ACC=ACC)[0][0]
 
                 if gen_matrix or (_index>11 and _index<15):
-                    # 动作框转换为逐帧预测的标签
-                    pred_labels.extend(locCls2Label(pred_tensor, label[idx].view(-1,1))[0])
-                gt_labels.extend(locCls2Label(gt_tensor, labelV[idp][0].view(-1,1))[0])
+                    # 动作框转换为逐帧预测的标签，仅在生成混淆矩阵时使用
+                    pred_labels.extend(locCls2Label(pred_box, label.view(-1,1))[0])
+                # 真实动作框转换为逐帧的标签
+                gt_labels.extend(locCls2Label(gt_box, labelV[idp][0].view(-1,1))[0])
 
                 # 绘制动作实例图
-                if PLOT:
-                    X=np.linspace(0,192,192,endpoint=True)
-                    plt.contourf(dataV[idp].cpu())
-                    plt.colorbar()
-
-                    currentAxis=plt.gca()
-                    if dataset_name=="TEMPORAL":
-                        h = 49
-                    else:
-                        h = 87
-                    rect=patches.Rectangle((bboxV[idp][0], 1), bboxV[idp][1]-bboxV[idp][0] ,h, linewidth=2,edgecolor='white',facecolor='none')
-                    currentAxis.add_patch(rect)
-                    rect=patches.Rectangle((bbox[idx][0], 2), bbox[idx][1]-bbox[idx][0] ,h-2, linewidth=2,edgecolor='r',facecolor='none')
-                    currentAxis.add_patch(rect)
-                    plt.ylabel("Channels")
-                    plt.xlabel("predict_label= "+actions[int(label[idx])]+"  groudtruth_label = "+actions[int(labelV[idp][0])]+"  score = "+str(conf[idx].tolist())[:5])
-                    plt.savefig("predict/%d.png"%(i), dpi=98)
-                    plt.close()
+                if PLOT and _index == 14 and (i==270 or i==140 or i==130 or i==119 or i==69):
+                    plot_csi_box_actions(dataV[idp].cpu(), 
+                                        pred_box[0], gt_box[0], actions[pred_action], actions[gt_action], 
+                                        str(conf.tolist())[:5], dataset_name, i)
               
                 # 统计结果
                 if ACC:
-                    acc = acc + 1
+                    accuracy = accuracy + 1
                 ious_all += max_iou
                 detection_all += dete_acc
-                final_all += final_acc
+                class_acc_all += class_acc
 
+    # 混淆矩阵
     if gen_matrix or(_index>11 and _index<15):
         # 绘制分类混淆矩阵
         from sklearn.metrics import confusion_matrix
         matrix = confusion_matrix(gt_labels, pred_labels, normalize='true')
         plot_confusion_matrix(matrix, dataset.actions,'confusion_matrix.png', title='Sample-level Action Classification Confusion Matrix')
-
         # 绘制检测混淆矩阵
         gt_labels = [1.0 if each>=1.0 else 0.0 for each in gt_labels]
         pred_labels = [1.0 if each>=1.0 else 0.0 for each in pred_labels]
@@ -188,26 +185,24 @@ for each in pkl_files:
     # 计算平均结果
     ious_all /= num_test_instances
     detection_all /= num_test_instances
-    final_all /= num_test_instances
-    acc /= num_test_instances
+    class_acc_all /= num_test_instances
+    accuracy /= num_test_instances
 
     # unet的逐帧分类精度直接计算，因为unet结果转换为动作框后的逐帧类别有误差
     if unet_result != []:
         unet_result = torch.cat(unet_result, dim=0)
-        final_all = unet_result.eq(torch.Tensor(gt_labels).view(-1,192)).sum()/ (num_test_instances * 192)
+        class_acc_all = unet_result.eq(torch.Tensor(gt_labels).view(-1,192)).sum()/ (num_test_instances * 192)
     # 滑动窗口方法的结果没有逐帧分类精度
     elif each[0][-8:] == "null.pkl":
-        final_all = 0
+        class_acc_all = 0
     
     # 打印pkl文件名
     print(each[0])
-    # print("分类准确度：", str(acc)[:6], "  IOU: ",str(ious_all)[:6])
-    # print("检测分类精度: ",str(final_all)[:6], " 检测精度: ",str(detection_all)[:6])
 
     # 保存所有结果到一个行向量
-    raw_1.append(final_all)
+    raw_1.append(class_acc_all)
     raw_1.append(detection_all)
-    raw_2.append(acc)
+    raw_2.append(accuracy)
     raw_2.append(ious_all)
 
     # 每三个数据集的结果作为一行
@@ -216,7 +211,7 @@ for each in pkl_files:
         raw_1 = []
         raw_2 = []
 
-    # 绘图
+    # 绘制每个实验的柱状图和表格
     for k in range(0, len(exps_index)):
         if _index==exps_index[k]:
             # 绘制分类准确度和IoU的柱状图
