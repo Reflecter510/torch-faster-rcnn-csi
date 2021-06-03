@@ -15,7 +15,7 @@ import random
 import datetime
 import time
 
-
+# 设置随机数种子
 def setup_seed(seed):
      torch.manual_seed(seed)
      torch.cuda.manual_seed_all(seed)
@@ -23,11 +23,14 @@ def setup_seed(seed):
      random.seed(seed)
      torch.backends.cudnn.deterministic = True
 
+# 获取优化器的学习率
 def get_lr(optimizer):
     for param_group in optimizer.param_groups:
         return param_group['lr']
-        
+
+# 训练一个epoch
 def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  best_train_loss, best_test_loss):
+    # 初始化所有类型的loss
     total_loss = 0
     rpn_loc_loss = 0
     rpn_cls_loss = 0
@@ -35,6 +38,7 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
     roi_cls_loss = 0
     val_toal_loss = 0
 
+    # 计算训练批次
     epoch_size /= train_batch
 
     with tqdm(total=epoch_size,desc=f'Epoch {epoch + 1}/{Epoch}',postfix=dict,mininterval=0.3) as pbar:
@@ -56,7 +60,9 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
                     boxes = [Variable((box).type(torch.FloatTensor)) for box in boxes]
                     labels = [Variable((label).type(torch.FloatTensor)) for label in labels]
             
+            # 训练
             losses = train_util.train_step(imgs, boxes, labels)
+            # 统计训练loss
             rpn_loc, rpn_cls, roi_loc, roi_cls, total = losses
             total_loss += total
             rpn_loc_loss += rpn_loc
@@ -64,6 +70,7 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
             roi_loc_loss += roi_loc
             roi_cls_loss += roi_cls
             
+            # 在命令行实时显示loss变化
             pbar.set_postfix(**{'total'    : total_loss.item() / (iteration + 1), 
                                 'rpn_loc'  : rpn_loc_loss.item() / (iteration + 1),  
                                 'rpn_cls'  : rpn_cls_loss.item() / (iteration + 1), 
@@ -71,6 +78,7 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
                                 'roi_cls'  : roi_cls_loss.item() / (iteration + 1), 
                                 'lr'       : get_lr(optimizer)})
             pbar.update(1)
+    # 将训练集loss绘制到tensorboard
     writer.add_scalar('train_loss', total_loss/(epoch_size+1), epoch)
     writer.add_scalar('train_roi_cls_loss', roi_cls_loss/len(gen),epoch)
     writer.add_scalar('train_roi_loc_loss', roi_loc_loss/len(gen),epoch)
@@ -78,52 +86,60 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
     writer.add_scalar('train_rpn_loc_loss', rpn_loc_loss/len(gen),epoch)
     writer.add_scalar('train_lr', get_lr(optimizer),epoch)
 
-    print('Start Validation')
+    # # 测试测试集
+    # print('Start Validation')
+    # # 计算测试批次
+    # epoch_size_val /= test_bacth
+    # # 初始化所有测试loss
+    # rpn_loc_loss = 0
+    # rpn_cls_loss = 0
+    # roi_loc_loss = 0
+    # roi_cls_loss = 0
+    # with tqdm(total=epoch_size_val, desc=f'Epoch {epoch + 1}/{Epoch}',postfix=dict,mininterval=0.3) as pbar:
+    #     for iteration, batch in enumerate(genval):
+    #         if iteration >= int(epoch_size_val)+1:
+    #             break
+    #         imgs,boxes,labels = batch[0], batch[1], batch[2]
+    #         imgs = imgs.view(-1, IMAGE_SHAPE[0], IMAGE_SHAPE[1])
+    #         boxes = torch.Tensor(boxes)
+    #         boxes = boxes.view(1,-1)
 
-    epoch_size_val /= test_bacth
-    
-    rpn_loc_loss = 0
-    rpn_cls_loss = 0
-    roi_loc_loss = 0
-    roi_cls_loss = 0
-    with tqdm(total=epoch_size_val, desc=f'Epoch {epoch + 1}/{Epoch}',postfix=dict,mininterval=0.3) as pbar:
-        for iteration, batch in enumerate(genval):
-            if iteration >= int(epoch_size_val)+1:
-                break
-            imgs,boxes,labels = batch[0], batch[1], batch[2]
-            imgs = imgs.view(-1, IMAGE_SHAPE[0], IMAGE_SHAPE[1])
-            boxes = torch.Tensor(boxes)
-            boxes = boxes.view(1,-1)
-            with torch.no_grad():
-                if cuda:
-                    imgs = Variable((imgs).type(torch.FloatTensor)).cuda()
-                    boxes = [Variable((box).type(torch.FloatTensor)).cuda() for box in boxes]
-                    labels = [Variable((label).type(torch.FloatTensor)).cuda() for label in labels]
-                else:
-                    imgs = Variable((imgs).type(torch.FloatTensor))
-                    boxes = [Variable((box).type(torch.FloatTensor)) for box in boxes]
-                    labels = [Variable((label).type(torch.FloatTensor)) for label in labels]
+    #         with torch.no_grad():
+    #             if cuda:
+    #                 imgs = Variable((imgs).type(torch.FloatTensor)).cuda()
+    #                 boxes = [Variable((box).type(torch.FloatTensor)).cuda() for box in boxes]
+    #                 labels = [Variable((label).type(torch.FloatTensor)).cuda() for label in labels]
+    #             else:
+    #                 imgs = Variable((imgs).type(torch.FloatTensor))
+    #                 boxes = [Variable((box).type(torch.FloatTensor)) for box in boxes]
+    #                 labels = [Variable((label).type(torch.FloatTensor)) for label in labels]
 
-                train_util.optimizer.zero_grad()
-                losses = train_util.forward(imgs, boxes, labels)
-                rpn_loc, rpn_cls, roi_loc, roi_cls, val_total = losses
-                val_toal_loss += val_total
-                rpn_loc_loss += rpn_loc
-                rpn_cls_loss += rpn_cls
-                roi_loc_loss += roi_loc
-                roi_cls_loss += roi_cls
-            pbar.set_postfix(**{'total_loss': val_toal_loss.item() / (iteration + 1)})
-            pbar.update(1)
-    writer.add_scalar('test_loss', val_toal_loss/(epoch_size_val+1), epoch)
-    writer.add_scalar('test_roi_cls_loss', roi_cls_loss/len(genval),epoch)
-    writer.add_scalar('test_roi_loc_loss', roi_loc_loss/len(genval),epoch)
-    writer.add_scalar('test_rpn_cls_loss', rpn_cls_loss/len(genval),epoch)
-    writer.add_scalar('test_rpn_loc_loss', rpn_loc_loss/len(genval),epoch)
+    #             train_util.optimizer.zero_grad()
+    #             # 只进行前向传播
+    #             losses = train_util.forward(imgs, boxes, labels)
+    #             # 统计loss
+    #             rpn_loc, rpn_cls, roi_loc, roi_cls, val_total = losses
+    #             val_toal_loss += val_total
+    #             rpn_loc_loss += rpn_loc
+    #             rpn_cls_loss += rpn_cls
+    #             roi_loc_loss += roi_loc
+    #             roi_cls_loss += roi_cls
+    #         # 在命令行实时显示测试集loss变化
+    #         pbar.set_postfix(**{'total_loss': val_toal_loss.item() / (iteration + 1)})
+    #         pbar.update(1)
+    # # 将测试集loss绘制到tensorboard
+    # writer.add_scalar('test_loss', val_toal_loss/(epoch_size_val+1), epoch)
+    # writer.add_scalar('test_roi_cls_loss', roi_cls_loss/len(genval),epoch)
+    # writer.add_scalar('test_roi_loc_loss', roi_loc_loss/len(genval),epoch)
+    # writer.add_scalar('test_rpn_cls_loss', rpn_cls_loss/len(genval),epoch)
+    # writer.add_scalar('test_rpn_loc_loss', rpn_loc_loss/len(genval),epoch)
 
-    print('Finish Validation')
-    print('Epoch:'+ str(epoch+1) + '/' + str(Epoch))
-    print('Total Loss: %.4f || Val Loss: %.4f ' % (total_loss/(epoch_size+1),val_toal_loss/(epoch_size_val+1)))
+    # # 打印一次迭代的总loss
+    # print('Finish Validation')
+    # print('Epoch:'+ str(epoch+1) + '/' + str(Epoch))
+    # print('Total Loss: %.4f || Val Loss: %.4f ' % (total_loss/(epoch_size+1),val_toal_loss/(epoch_size_val+1)))
 
+    # 每5次epoch保存训练断点
     print('Saving state, iter:', str(epoch+1))
     best_train_loss = min(best_train_loss, total_loss/(epoch_size+1))
     best_test_loss = min(best_test_loss, val_toal_loss/(epoch_size_val+1))
@@ -135,7 +151,6 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
             "best_train_loss": best_train_loss,
             'lr_schedule': lr_scheduler.state_dict()
         }
-    
     if (epoch+1) % 5 == 0:
         torch.save(checkpoint, 'logs/'+log_name+'/Epoch%d-Total_Loss%.4f-Val_Loss%.4f.pth'%((epoch+1),total_loss/(epoch_size+1),val_toal_loss/(epoch_size_val+1)))
     
@@ -143,7 +158,7 @@ if __name__ == "__main__":
     Kaggle = True
 
     # 设置训练的数据集
-    dataset = S2
+    dataset = S1P1
    
     # 设置实验名
     log_name = "16-torch-vgg"
