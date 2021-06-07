@@ -5,7 +5,9 @@ from nets.alexnet import AlexNet
 from nets.unet_model import UNet
 from lib.pool import MultiScaleRoIAlign
 from torch import nn
-from torchvision.models.detection.anchor_utils import AnchorGenerator
+#from torchvision.models.detection.anchor_utils import AnchorGenerator
+from lib.rpn import AnchorGenerator
+
 # 封装Faster RCNN 模型
 def get_model(dataset, BACKBONE):
     n_channels = dataset.image_shape[0]
