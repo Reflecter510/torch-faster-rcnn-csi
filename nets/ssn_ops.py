@@ -18,7 +18,7 @@ def parse_stage_config(stage_cfg):
     else:
         raise ValueError("Incorrect STPP config {}".format(stage_cfg))
 
-
+# 时间金字塔池化
 class StructuredTemporalPyramidPooling(torch.nn.Module):
     """
     This the STPP operator for training. Please see the ICCV paper for more details.
@@ -70,7 +70,7 @@ class StructuredTemporalPyramidPooling(torch.nn.Module):
             course_ft = src[:, x1:x2, :].mean(dim=1)
             return course_ft, stpp_ft
 
-
+######################## 以下代码均没有使用
 class STPPReorgainzed:
     """
         This class implements the reorganized testing in SSN.
