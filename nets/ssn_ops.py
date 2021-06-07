@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn.init import xavier_uniform
 import math
 import numpy as np
-
+# 实现时间金字塔池化操作
 
 class Identity(torch.nn.Module):
     def forward(self, input):

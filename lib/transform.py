@@ -6,6 +6,9 @@ import torchvision
 from typing import List, Tuple, Dict, Optional
 from torchvision.models.detection.image_list import ImageList
 
+
+# 原始的Faster RCNN对输入的数据尺寸进行resize
+# 由于CSI数据集尺寸都是一致的，不需要变换，因此实现此类用来中转
 class NothingTransform(nn.Module):
     def __init__(self):
         super(NothingTransform, self).__init__()

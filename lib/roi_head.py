@@ -16,7 +16,9 @@ from typing import Optional, List, Dict, Tuple
 from torchvision.models.detection.roi_heads import *
 
 from nets.ssn_ops import StructuredTemporalPyramidPooling
+# 统一池化层 + 预测网络
 
+# 预测网络的分类损失和回归损失
 def fastrcnn_loss(class_logits, box_regression, labels, regression_targets):
     # type: (Tensor, Tensor, List[Tensor], List[Tensor]) -> Tuple[Tensor, Tensor]
     """
@@ -35,7 +37,7 @@ def fastrcnn_loss(class_logits, box_regression, labels, regression_targets):
 
     labels = torch.cat(labels, dim=0)
     regression_targets = torch.cat(regression_targets, dim=0)
-
+    # 分类损失
     classification_loss = F.cross_entropy(class_logits, labels.view(labels.shape[0]))
 
     # get indices that correspond to the regression targets for
@@ -45,7 +47,7 @@ def fastrcnn_loss(class_logits, box_regression, labels, regression_targets):
     labels_pos = labels[sampled_pos_inds_subset]
     N, num_classes = class_logits.shape
     box_regression = box_regression.reshape(N, box_regression.size(-1) // 4, 4)
-
+    # 回归损失
     box_loss = smooth_l1_loss(
         box_regression[sampled_pos_inds_subset, labels_pos],
         regression_targets[sampled_pos_inds_subset],
@@ -56,6 +58,7 @@ def fastrcnn_loss(class_logits, box_regression, labels, regression_targets):
 
     return classification_loss, box_loss
 
+# 统一池化层 + 预测网络
 class RoIHeads(nn.Module):
     __annotations__ = {
         'box_coder': det_utils.BoxCoder,
@@ -99,7 +102,7 @@ class RoIHeads(nn.Module):
         if bbox_reg_weights is None:
             bbox_reg_weights = (10., 10., 5., 5.)
 
-        #FIXME 与RPN不一致
+        #FIXME 与RPN的不一致，这里仍然使用二维动作框
         self.box_coder = det_utils.BoxCoder(bbox_reg_weights)
 
         self.box_roi_pool = box_roi_pool
@@ -118,6 +121,7 @@ class RoIHeads(nn.Module):
         self.keypoint_head = keypoint_head
         self.keypoint_predictor = keypoint_predictor
 
+        # 时间金字塔池化，结构配置((1,3), (1, 2,5), (1,3))
         self.stpp = StructuredTemporalPyramidPooling(True, configs=((1,3), (1, 2,5), (1,3)))
 
     def has_mask(self):
@@ -138,6 +142,7 @@ class RoIHeads(nn.Module):
             return False
         return True
 
+    # 根据建议框和真实动作框生成真实标签和真实偏移量
     def assign_targets_to_proposals(self, proposals, gt_boxes, gt_labels):
         # type: (List[Tensor], List[Tensor], List[Tensor]) -> Tuple[List[Tensor], List[Tensor]]
         matched_idxs = []
@@ -186,6 +191,7 @@ class RoIHeads(nn.Module):
             sampled_inds.append(img_sampled_inds)
         return sampled_inds
 
+    # 在建议框中添加真实动作框
     def add_gt_proposals(self, proposals, gt_boxes):
         # type: (List[Tensor], List[Tensor]) -> List[Tensor]
         proposals = [
@@ -203,6 +209,7 @@ class RoIHeads(nn.Module):
         if self.has_mask():
             assert all(["masks" in t for t in targets])
 
+    # 正负样本划分
     def select_training_samples(self,
                                 proposals,  # type: List[Tensor]
                                 targets     # type: Optional[List[Dict[str, Tensor]]]
@@ -239,6 +246,7 @@ class RoIHeads(nn.Module):
         regression_targets = self.box_coder.encode(matched_gt_boxes, proposals)
         return proposals, matched_idxs, labels, regression_targets
 
+    # 预测动作框筛选，包括边界裁剪、去除背景预测框、排序、去除空预测、NMS
     def postprocess_detections(self,
                                class_logits,    # type: Tensor
                                box_regression,  # type: Tensor
@@ -337,15 +345,17 @@ class RoIHeads(nn.Module):
             matched_idxs = None
 
         #TODO: 建议框高度反缩放
+        # 统一池化
         box_features = self.box_roi_pool(features, proposals, image_shapes)
         
-        #TODO 时间金字塔池化
+        # 时间金字塔池化
         activity_ft, completeness_ft = self.stpp(box_features, None, [3, 3 + 10, 16])
-
+        
+        # 预测网络
         box_features = self.box_head(completeness_ft)
         class_logits, box_regression = self.box_predictor(box_features)
         
-        #FIXME  取消[-1,2] 转 [-1,4]  
+        #FIXME  建议框格式[-1,2] 转换为 [-1,4]  
         box_regression = box_regression.view(-1, int(box_regression.shape[1]/2), 2)
         a = torch.zeros((box_regression.shape[0],box_regression.shape[1],1)).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
         tmp = torch.cat([a, box_regression[:,:,0].unsqueeze(2), a, box_regression[:,:,1].unsqueeze(2)], dim=2)
@@ -355,6 +365,7 @@ class RoIHeads(nn.Module):
         losses = {}
         if self.training:
             assert labels is not None and regression_targets is not None
+            # 计算loss
             loss_classifier, loss_box_reg = fastrcnn_loss(
                 class_logits, box_regression, labels, regression_targets)
             losses = {

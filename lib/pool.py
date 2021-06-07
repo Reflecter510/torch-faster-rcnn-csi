@@ -8,7 +8,9 @@ from torchvision.ops.boxes import box_area
 from typing import Optional, List, Dict, Tuple, Union
 
 from torchvision.ops.poolers import LevelMapper,initLevelMapper, _onnx_merge_levels
+# 统一池化层的具体实现 RoIAlign
 
+# 支持多流输入的RoIAlign
 class MultiScaleRoIAlign(nn.Module):
     """
     Multi-scale RoIAlign pooling, which is useful for detection with or without FPN.

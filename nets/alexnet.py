@@ -7,6 +7,7 @@ import torch
 from torch.nn.functional import selu
 import torchvision.models.detection.faster_rcnn
 
+# AlexNet的一个卷积模块
 class CnnBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, pool = False):
         super().__init__()
@@ -26,9 +27,11 @@ class CnnBlock(nn.Module):
         x = self.BN(x)
         return x 
 
+# 基于AlexNet的三流结构
 class Feature(nn.Module):
     def __init__(self, n_channels=52, out_channels=384):
         super().__init__()
+        # 作为Faster RCNN的主干网络时 必须定义输出通道数
         self.out_channels = out_channels
         self.layer1 = CnnBlock(n_channels, self.out_channels, kernel_size=11, stride=4, padding=2, pool=True)
         self.layer2 = CnnBlock(n_channels, self.out_channels, kernel_size=5, stride=1, padding=2)
@@ -50,13 +53,13 @@ class AlexNet(nn.Module):
     def __init__(self, n_channels=52, n_classes=7):
         super(AlexNet, self).__init__()
        
-
+        # 特征提取，只有这个用于Faster RCNN
         self.features = nn.Sequential(
             CnnBlock(n_channels, 128, kernel_size=11, stride=4, padding=2, pool=True),
             CnnBlock(128, 192, kernel_size=5, stride=1, padding=2),
             CnnBlock(192, self.out_channels, kernel_size=3, stride=1, padding=1)
         )
-
+        # 作为Faster RCNN的主干网络时 必须定义输出通道数
         self.features.out_channels = self.out_channels
         
         # 平均池化到7x7大小
@@ -113,6 +116,7 @@ if __name__ == '__main__':
     x = data
     model = features
     
+    # 绘制各个卷积层输出的特征图
     from tensorboardX import SummaryWriter
     import torchvision.utils as vutils
     from torch.nn import functional as F

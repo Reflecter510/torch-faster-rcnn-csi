@@ -3,7 +3,8 @@
 from torch import nn
 import torch
 import torch.nn.functional as F
-
+# 基于Temporal Unet修改，
+# 可作为Faster RCNN的特征提取网络，需要取消扩展上下文和时间金字塔才能达到良好结果
 class UNet_features(nn.Module):
     def __init__(self, n_channels):
         super().__init__()

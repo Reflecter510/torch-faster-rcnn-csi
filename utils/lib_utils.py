@@ -3,8 +3,9 @@ import math
 from torch.jit.annotations import List, Tuple
 from torch import Tensor
 import torchvision
+# 注意，以下代码均在PyTorch源码的基础上修改
 
-
+# 回归损失（与原始源码一致）
 def smooth_l1_loss(input, target, beta: float = 1. / 9, size_average: bool = True):
     """
     very similar to the smooth_l1_loss from pytorch, but with
@@ -17,6 +18,7 @@ def smooth_l1_loss(input, target, beta: float = 1. / 9, size_average: bool = Tru
         return loss.mean()
     return loss.sum()
 
+# 将动作建议框和偏移量 转换为 修正后的动作框 （一维版本）
 @torch.jit.script
 def encode_boxes(reference_boxes, proposals, weights):
     # type: (torch.Tensor, torch.Tensor, torch.Tensor)
@@ -52,7 +54,7 @@ def encode_boxes(reference_boxes, proposals, weights):
     targets = torch.cat((targets_dx, targets_dw), dim=1)
     return targets
 
-
+# 动作框编码器，负责 建议框、偏移量  和 修正动作框 之间的相互转换
 @torch.jit.script
 class BoxCoder(object):
     """
@@ -70,6 +72,7 @@ class BoxCoder(object):
         self.weights = weights
         self.bbox_xform_clip = bbox_xform_clip
 
+    # 将动作建议框和偏移量 转换为 修正后的动作框 （一维版本）
     def encode(self, reference_boxes, proposals):
         # type: (List[Tensor], List[Tensor]) 
         boxes_per_image = [len(b) for b in reference_boxes]
@@ -77,7 +80,7 @@ class BoxCoder(object):
         proposals = torch.cat(proposals, dim=0)
         targets = self.encode_single(reference_boxes, proposals)
         return targets.split(boxes_per_image, 0)
-
+    # 将动作建议框和偏移量 转换为 修正后的动作框 （一维版本）
     def encode_single(self, reference_boxes, proposals):
         """
         Encode a set of proposals with respect to some
@@ -94,6 +97,7 @@ class BoxCoder(object):
 
         return targets
 
+    # 将 动作建议框和真实动作框 转换为 偏移量 （一维版本）
     def decode(self, rel_codes, boxes):
         # type: (Tensor, List[Tensor])
         assert isinstance(boxes, (list, tuple))
@@ -107,7 +111,7 @@ class BoxCoder(object):
             rel_codes.reshape(box_sum, -1), concat_boxes
         )
         return pred_boxes.reshape(box_sum, -1, 2)
-
+    # 将 动作建议框和真实动作框 转换为 偏移量 （一维版本）
     def decode_single(self, rel_codes, boxes):
         """
         From a set of original boxes and encoded relative box offsets,

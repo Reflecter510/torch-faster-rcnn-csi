@@ -8,11 +8,12 @@ import torch.nn.functional as F
 
 cfg = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M']
 #--------------------------------------#
-#   VGG16的结构
+#   VGG16的结构 （维持图像第二维尺寸不变）
 #--------------------------------------#
 class VGG(nn.Module):
     def __init__(self, features, num_classes=13, init_weights=True):
         super(VGG, self).__init__()
+        # 特征提取，只有这个用于Faster RCNN
         self.features = features
         # 平均池化到7x7大小
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
@@ -88,6 +89,7 @@ def decom_vgg16(in_channels):
     features = nn.Sequential(*features)
     classifier = nn.Sequential(*classifier)
     
+    # 作为Faster RCNN的主干网络时 必须定义输出通道数
     features.out_channels = 512
 
     # print(classifier)
@@ -103,9 +105,12 @@ class LossFunction(nn.Module):
         k = torch.nn.functional.cross_entropy(x, y.long(), ignore_index=-1)
         return k
 
+
+# VGG与另一个卷积网络的双流结构
 class Vgg2FLow(nn.Module):
     def __init__(self, n_channels=52, out_channels=512):
         super().__init__()
+        # 作为Faster RCNN的主干网络时 必须定义输出通道数
         self.out_channels = out_channels
         self.layer1 =  nn.Sequential(
             CnnBlock(n_channels, 128, kernel_size=11, stride=4, padding=2, pool=True),

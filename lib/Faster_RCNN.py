@@ -8,6 +8,7 @@ from lib.roi_head import RoIHeads
 from torch import nn, Tensor
 import torch.nn.functional as F
 
+# 负责基本设置初始化的Faster RCNN入口类
 class FasterRCNN(GeneralizedRCNN):
 
     def __init__(self, backbone, num_classes=None,
@@ -29,6 +30,7 @@ class FasterRCNN(GeneralizedRCNN):
                  box_batch_size_per_image=512, box_positive_fraction=0.25,
                  bbox_reg_weights=None):
 
+        # 主干特征提取网络必须要有输出通道数
         if not hasattr(backbone, "out_channels"):
             raise ValueError(
                 "backbone should contain an attribute out_channels "
@@ -38,6 +40,7 @@ class FasterRCNN(GeneralizedRCNN):
         assert isinstance(rpn_anchor_generator, (AnchorGenerator, type(None)))
         assert isinstance(box_roi_pool, (MultiScaleRoIAlign, type(None)))
 
+        # 该参数已输入
         if num_classes is not None:
             if box_predictor is not None:
                 raise ValueError("num_classes should be None when box_predictor is specified")
@@ -46,14 +49,17 @@ class FasterRCNN(GeneralizedRCNN):
                 raise ValueError("num_classes should not be None when box_predictor "
                                  "is not specified")
 
+        # 主干特征提取网络的输出通道数
         out_channels = backbone.out_channels
 
+        # 不使用，锚框生成器由输入参数提供
         if rpn_anchor_generator is None:
             anchor_sizes = ((32,), (64,), (128,), (256,), (512,))
             aspect_ratios = ((0.5, 1.0, 2.0),) * len(anchor_sizes)
             rpn_anchor_generator = AnchorGenerator(
                 anchor_sizes, aspect_ratios
             )
+        # RPN网络的三个卷积层，回归和分类
         if rpn_head is None:
             rpn_head = RPNHead(
                 out_channels, rpn_anchor_generator.num_anchors_per_location()[0]
@@ -62,32 +68,36 @@ class FasterRCNN(GeneralizedRCNN):
         rpn_pre_nms_top_n = dict(training=rpn_pre_nms_top_n_train, testing=rpn_pre_nms_top_n_test)
         rpn_post_nms_top_n = dict(training=rpn_post_nms_top_n_train, testing=rpn_post_nms_top_n_test)
 
+        # 设置RPN网络
         rpn = RegionProposalNetwork(
             rpn_anchor_generator, rpn_head,
             rpn_fg_iou_thresh, rpn_bg_iou_thresh,
             rpn_batch_size_per_image, rpn_positive_fraction,
             rpn_pre_nms_top_n, rpn_post_nms_top_n, rpn_nms_thresh,
             score_thresh=rpn_score_thresh)
-
+        
+        # 不使用，统一池化层由输入参数提供
         if box_roi_pool is None:
             box_roi_pool = MultiScaleRoIAlign(
                 featmap_names=['0', '1', '2', '3'],
                 output_size=(7,1),
                 sampling_ratio=0)
 
+        # 预测网络的全连接层
         if box_head is None:
             resolution = box_roi_pool.output_size[0]
             representation_size = 512
             box_head = TwoMLPHead(
                 out_channels * resolution,# ** 2,
                 representation_size)
-
+        # 预测网络最后两个全连接层，负责回归和分类
         if box_predictor is None:
             representation_size = 512
             box_predictor = FastRCNNPredictor(
                 representation_size,
                 num_classes)
 
+        # 预测网络
         roi_heads = RoIHeads(
             # Box
             box_roi_pool, box_head, box_predictor,
@@ -104,7 +114,7 @@ class FasterRCNN(GeneralizedRCNN):
 
         super(FasterRCNN, self).__init__(backbone, rpn, roi_heads,transform)
 
-
+# 预测网络的两个全连接层
 class TwoMLPHead(nn.Module):
     """
     Standard heads for FPN-based models
@@ -128,7 +138,7 @@ class TwoMLPHead(nn.Module):
 
         return x
 
-
+# 预测网络最后两个全连接层，负责回归和分类
 class FastRCNNPredictor(nn.Module):
     """
     Standard classification + bounding box regression layers

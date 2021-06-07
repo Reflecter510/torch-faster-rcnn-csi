@@ -4,6 +4,7 @@ import warnings
 from typing import Tuple, List, Dict, Optional, Union
 from torch import nn, Tensor
 
+# Faster RCNN 前向传播的具体流程
 """
 Implements the Generalized R-CNN framework
 """
@@ -51,6 +52,7 @@ class GeneralizedRCNN(nn.Module):
                 like `scores`, `labels` and `mask` (for Mask R-CNN models).
 
         """
+        # 程序健壮性检查
         if self.training and targets is None:
             raise ValueError("In training mode, targets should be passed")
         if self.training:
@@ -66,14 +68,17 @@ class GeneralizedRCNN(nn.Module):
                     raise ValueError("Expected target boxes to be of type "
                                      "Tensor, got {:}.".format(type(boxes)))
 
+        # 获取每份数据的尺寸（对CSI无意义，因为尺寸一致）
         original_image_sizes: List[Tuple[int, int]] = []
         for img in images:
             val = img.shape[-2:]
             assert len(val) == 2
             original_image_sizes.append((val[0], val[1]))
 
+        # 没做什么具体事情，只是转换一下格式
         images, targets = self.transform(images, targets)
 
+        # 程序健壮性检查
         # Check for degenerate boxes
         # oriTODO: Move this to a function
         if targets is not None:
@@ -88,12 +93,18 @@ class GeneralizedRCNN(nn.Module):
                                      " Found invalid box {} for target at index {}."
                                      .format(degen_bb, target_idx))
 
-        # 模型主要流程
+        # 主干特征提取网络
         features = self.backbone(images.tensors)
         if isinstance(features, torch.Tensor):
             features = OrderedDict([('0', features)])
+
+        # 动作建议框生成
         proposals, proposal_losses = self.rpn(images, features, targets)
+
+        # 预测网络
         detections, detector_losses = self.roi_heads(features, proposals, images.image_sizes, targets)
+        
+        # 没做什么具体事情，只是转换一下格式
         detections = self.transform.postprocess(detections, images.image_sizes, original_image_sizes)
 
         losses = {}

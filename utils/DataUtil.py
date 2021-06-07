@@ -6,10 +6,12 @@ from torch.utils.data.dataset import ConcatDataset
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import os
-
+# 数据集根目录
 home_dir = '../frcnn_csi/'
+# 是否增加噪声
 noise = False
 
+# 根据数据集名称和类型加载
 def load_dataset(dataset_name, data_type):
     data_dir = home_dir+"data/"+dataset_name+"/"
     
@@ -32,21 +34,21 @@ def load_dataset(dataset_name, data_type):
 
     return dataset, num_instances
 
-
+# 负责生成 data_loader
 def get_data_loader(dataset_name, data_type, batch_size, shuffle=False):
     if dataset_name == "S":
         return _get_data_S_loader(data_type, batch_size, shuffle)
         
     dataset, num_instances = load_dataset(dataset_name, data_type)
 
-    # 数据增强：噪声
+    # 数据增强：高斯噪声
     if noise:
         dataset, num_instances = data_argumentation(dataset, num_instances)
     
     data_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
     return num_instances, data_loader
 
-
+# 合并S1和S2数据集的data_loader (已经没有使用的意义)
 def _get_data_S_loader(data_type, batch_size, shuffle=False):
 
     dataset_S1, num_instances_S1 = load_dataset("192S1ALL", data_type)
@@ -62,17 +64,19 @@ def _get_data_S_loader(data_type, batch_size, shuffle=False):
     data_loader = DataLoader(dataset=concat_data, batch_size=batch_size, shuffle=shuffle)
     return num_instances, data_loader
 
-
+# 数据集增强
 def data_argumentation(dataset, num_instances):
     datas = []
     bboxs = []
     labels = [] 
     for (data, bbox, label) in dataset:
+        # 高斯噪声
         tmp = AddGaussianNoise(amplitude=0.3)(data.clone())
         datas.append(tmp)
         bboxs.append(bbox)
         labels.append(label)
 
+        # 椒盐噪声
         # tmp2 = salt_and_pepper(data.clone(), 0.03)
         # datas.append(tmp2)
         # bboxs.append(bbox)
@@ -113,6 +117,7 @@ class AddGaussianNoise(object):
         input = np.array(input)
         N = self.amplitude * np.random.normal(loc=self.mean, scale=self.variance, size=input.shape)
         input = N + input
+        # 对CSI是否适用？
         input[input > 255] = 255                       # 避免有值超过255而反转
         return torch.from_numpy(input).float()
 

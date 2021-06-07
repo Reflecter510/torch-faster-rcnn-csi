@@ -2,7 +2,10 @@ from utils.lib_utils import smooth_l1_loss
 from torchvision.models.detection.rpn import *
 from torch.jit.annotations import List, Optional, Dict, Tuple
 from utils.lib_utils import BoxCoder
+# RPN网络实现
+# 主要修改：将依赖于二维的动作框的代码改为一维动作框
 
+# 针对多流输入的时候，拼接各层级特征图生成的二分类和一维偏移量
 def concat_box_prediction_layers(box_cls, box_regression):
     # type: (List[Tensor], List[Tensor])
     box_cls_flattened = []
@@ -34,6 +37,7 @@ def concat_box_prediction_layers(box_cls, box_regression):
     box_regression = torch.cat(box_regression_flattened, dim=1).reshape(-1, 2)
     return box_cls, box_regression
 
+# RPN网络的三个卷积层
 class RPNHead(nn.Module):
     """
     Adds a simple RPN Head with classification and regression heads
@@ -45,10 +49,13 @@ class RPNHead(nn.Module):
 
     def __init__(self, in_channels, num_anchors):
         super(RPNHead, self).__init__()
+        
         self.conv = nn.Conv2d(
             in_channels, in_channels, kernel_size=3, stride=1, padding=1
         )
+        # 分类卷积层cls
         self.cls_logits = nn.Conv2d(in_channels, num_anchors, kernel_size=1, stride=1)
+        # 回归卷积层reg
         self.bbox_pred = nn.Conv2d(
             in_channels, num_anchors * 2, kernel_size=1, stride=1
         )
@@ -67,7 +74,7 @@ class RPNHead(nn.Module):
             bbox_reg.append(self.bbox_pred(t))
         return logits, bbox_reg
 
-
+# RPN网络
 class RegionProposalNetwork(torch.nn.Module):
     """
     Implements Region Proposal Network (RPN).
@@ -143,6 +150,7 @@ class RegionProposalNetwork(torch.nn.Module):
             return self._post_nms_top_n['training']
         return self._post_nms_top_n['testing']
 
+    # 根据锚框和真实动作框生成真实标签和真实偏移量
     def assign_targets_to_anchors(self, anchors, targets):
         # type: (List[Tensor], List[Dict[str, Tensor]]) -> Tuple[List[Tensor], List[Tensor]]
         labels = []
@@ -194,6 +202,7 @@ class RegionProposalNetwork(torch.nn.Module):
             offset += num_anchors
         return torch.cat(r, dim=1)
 
+    # 动作建议框筛选，包括边界裁剪、去除小框、排序、NMS
     def filter_proposals(self, proposals, objectness, image_shapes, num_anchors_per_level):
         # type: (Tensor, Tensor, List[Tuple[int, int]], List[int]) -> Tuple[List[Tensor], List[Tensor]]
         num_images = proposals.shape[0]
@@ -232,6 +241,7 @@ class RegionProposalNetwork(torch.nn.Module):
 
             # remove low scoring boxes
             # use >= for Backwards compatibility
+            # 默认值为0.0，因此均保留
             keep = torch.where(scores >= self.score_thresh)[0]
             boxes, scores, lvl = boxes[keep], scores[keep], lvl[keep]
 
@@ -239,6 +249,7 @@ class RegionProposalNetwork(torch.nn.Module):
             keep = box_ops.batched_nms(boxes, scores, lvl, self.nms_thresh)
 
             # keep only topk scoring predictions
+            # 默认值为2000，实际生成小于该值，因此均保留
             keep = keep[:self.post_nms_top_n()]
             boxes, scores = boxes[keep], scores[keep]
 
@@ -246,6 +257,7 @@ class RegionProposalNetwork(torch.nn.Module):
             final_scores.append(scores)
         return final_boxes, final_scores
 
+    # 计算RPN网络的损失
     def compute_loss(self, objectness, pred_bbox_deltas, labels, regression_targets):
         # type: (Tensor, Tensor, List[Tensor], List[Tensor]) -> Tuple[Tensor, Tensor]
         """
@@ -270,14 +282,14 @@ class RegionProposalNetwork(torch.nn.Module):
 
         labels = torch.cat(labels, dim=0)
         regression_targets = torch.cat(regression_targets, dim=0)
-
+        # 回归损失
         box_loss = smooth_l1_loss(
             pred_bbox_deltas[sampled_pos_inds],
             regression_targets[sampled_pos_inds],
             beta=1 / 9,
             size_average=False,
         ) / (sampled_inds.numel())
-
+        # 二分类损失
         objectness_loss = F.binary_cross_entropy_with_logits(
             objectness[sampled_inds], labels[sampled_inds]
         )
@@ -308,7 +320,9 @@ class RegionProposalNetwork(torch.nn.Module):
         """
         # RPN uses all feature maps that are available
         features = list(features.values())
+        # 生成二分类概率和偏移量
         objectness, pred_bbox_deltas = self.head(features)
+        # 生成锚框
         anchors = self.anchor_generator(images, features)
         #TODO 待优化
         my_anchors = [each[:,1:4:2] for each in anchors]
@@ -318,19 +332,23 @@ class RegionProposalNetwork(torch.nn.Module):
         num_anchors_per_level = [s[0] * s[1] * s[2] for s in num_anchors_per_level_shape_tensors]
         objectness, pred_bbox_deltas = \
             concat_box_prediction_layers(objectness, pred_bbox_deltas)
+
+        # 根据偏移量和锚框生成动作建议框
         # apply pred_bbox_deltas to anchors to obtain the decoded proposals
         # note that we detach the deltas because Faster R-CNN do not backprop through
         # the proposals
         proposals = self.box_coder.decode(pred_bbox_deltas.detach(), my_anchors)
         proposals = proposals.view(num_images, -1, 2)
 
-        #  [-1,2] 转 [-1,4]
+        #  建议框从[-1,2]格式 转为 [-1,4]
         a = torch.zeros((proposals.shape[0],proposals.shape[1],1)).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
         b = torch.ones((proposals.shape[0],proposals.shape[1],1)).to(torch.device("cuda:0" if torch.cuda.is_available() else "cpu"))
         proposals = torch.cat([a, proposals[:,:,0].unsqueeze(2), b, proposals[:,:,1].unsqueeze(2)], dim=2)
 
+        # 筛选出符合条件的建议框
         boxes, scores = self.filter_proposals(proposals, objectness, images.image_sizes, num_anchors_per_level)
 
+        # 计算损失
         losses = {}
         if self.training:
             assert targets is not None
