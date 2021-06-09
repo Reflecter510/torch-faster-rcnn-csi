@@ -27,7 +27,7 @@ class StructuredTemporalPyramidPooling(torch.nn.Module):
         super(StructuredTemporalPyramidPooling, self).__init__()
         self.sc = standalong_classifier
 
-        # 元组(1,) (1,2) (1,)，总数
+        # 结构配置，总长度
         starting_parts, starting_mult = parse_stage_config(configs[0])
         course_parts, course_mult = parse_stage_config(configs[1])
         ending_parts, ending_mult = parse_stage_config(configs[2])
@@ -37,6 +37,9 @@ class StructuredTemporalPyramidPooling(torch.nn.Module):
         self.norm_num = (starting_mult, course_mult, ending_mult)
 
     # tensor(n, 14, :), st和ed缩放因子tensor(n,2), int -> [st, st+cr, st+cr+ed
+    # ft: 特征向量
+    # scaling: 缩放因子（不使用）
+    # seg_split: 阶段划分  [持续阶段起点, 结束阶段起点, 总长度]
     def forward(self, ft, scaling, seg_split):
         x1 = seg_split[0]
         x2 = seg_split[1]
@@ -47,12 +50,19 @@ class StructuredTemporalPyramidPooling(torch.nn.Module):
         #scaling = scaling.view(-1, 2)
         n_sample = src.size()[0]
 
+        # 计算单个阶段的时间金字塔池化结果
+        # stage_ft: 该阶段的特征向量
+        # stage_parts: 单个阶段的所有池化尺寸，例如(1,3)
+        # norm_num: 阶段总长度
         def get_stage_stpp(stage_ft, stage_parts, norm_num, scaling):
             stage_stpp = []
             stage_len = stage_ft.size(1)
+            # 对于单个阶段的所有池化尺寸，例如(1,3)
             for n_part in stage_parts:
                 ticks = torch.arange(0, stage_len + 1e-5, stage_len / n_part)
+                # 为每个尺寸生成池化后的特征向量
                 for i in range(n_part):
+                    # 时间金字塔关键操作
                     part_ft = stage_ft[:, int(ticks[i]):int(ticks[i+1]), :].mean(dim=1) / norm_num
                     if scaling is not None:
                         part_ft = part_ft * scaling.resize(n_sample, 1)
