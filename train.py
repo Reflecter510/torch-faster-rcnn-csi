@@ -153,10 +153,10 @@ def fit_ont_epoch(net,epoch,epoch_size,epoch_size_val,gen,genval,Epoch,cuda,  be
     
 if __name__ == "__main__":
     # 默认为False，仅在使用kaggle GPU训练时使用
-    Kaggle = True
+    Kaggle = False
 
     # 设置训练的数据集
-    dataset = S2
+    dataset = TEMPORAL
    
     # 设置实验名
     log_name = "16-torch-vgg"

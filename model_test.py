@@ -22,7 +22,7 @@ which_data = "test"
 DataUtil.noise = False
 
 '''模型断点路径'''
-path_checkpoint =  "结果\TEMPORAL\exp0-vgg\\Epoch220-Total_Loss0.0155-Val_Loss0.3717.pth"
+path_checkpoint =  "结果/TEMPORAL/exp0-vgg/Epoch220-Total_Loss0.0155-Val_Loss0.3717.pth"
 
 #结果可视化
 PLOT = False    

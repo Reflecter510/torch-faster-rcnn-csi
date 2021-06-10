@@ -109,7 +109,7 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import numpy as np
 def plot_confusion_matrix(cm, classes, savename, title='Confusion Matrix'):
-    plt.figure(figsize=(12, 8), dpi=115)
+    plt.figure(figsize=(12, 8), dpi=100)
     np.set_printoptions(precision=2)
     # 在混淆矩阵中每格的概率值
     ind_array = np.arange(len(classes))
